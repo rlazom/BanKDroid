@@ -11,7 +11,6 @@ For help getting started with Flutter, view our online
 
 Special thanks to:
 - Flutter SMS developers (This is an SMS library for flutter.)
-- simple_permissions plugin developer
 - call_number plugin developer
 
 ## RoadMap
