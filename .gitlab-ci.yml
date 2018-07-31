@@ -6,25 +6,31 @@ before_script:
   - flutter channel beta
   - flutter upgrade
   - sudo chmod +x /builds/rlazom/BanKDroid/android/gradlew
+  - mkdir -p deliverables
   
 stages:
   - build
-  - deploy
+#  - deploy
 #  - test
 
 build:
   stage: build
   script:
     - flutter build apk
-    
-deploy:
-  stage: deploy
-  script:
     - mv build/app/outputs/apk/release/app-release.apk ./deliverables/bankdroid.apk
   artifacts:
     expire_in: 4 weeks
     paths:
-    - deliverables
+    - deliverables  
+    
+#deploy:
+#  stage: deploy
+#  script:
+#    - mv build/app/outputs/apk/release/app-release.apk ./deliverables/bankdroid.apk
+#  artifacts:
+#    expire_in: 4 weeks
+#    paths:
+#    - deliverables
 
 
 #unitTests:
