@@ -17,6 +17,7 @@ Special thanks to:
 
 - [ ] Adding gitlab-ci automatic build
 - [ ] Execute USSD codes from SIM 1 or 2
+- [ ] Add snapshots to readme.md
 - [ ] Graph with account balance
 - [x] Support for 2 accounts (CUP & CUC)
 - [ ] Improve Transactions Details
