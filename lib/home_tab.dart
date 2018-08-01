@@ -19,7 +19,6 @@ class HomeDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     List<Widget> dashboardWidgets = [
       SaldoActual(
         saldo: lastOperationCUP.saldo,
@@ -39,6 +38,14 @@ class HomeDashboard extends StatelessWidget {
         impDeb: operationType.impDeb,
       ));
     });
+
+//    resumeOperationsCUP.forEach((resumenMensual) {
+//      dashboardWidgets.add(OperacionGastoIngresoListItem(
+//        tipoOperacion: operationType.tipoOperacion,
+//        impCre: operationType.impCre,
+//        impDeb: operationType.impDeb,
+//      ));
+//    });
 
     return Scrollbar(
       child: ListView(
@@ -109,6 +116,13 @@ class SaldoActual extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class ResumenDetalles extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container();
   }
 }
 

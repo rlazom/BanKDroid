@@ -10,8 +10,7 @@ class OperationListProvider {
     return await query.querySms(address: "PAGOxMOVIL");
   }
 
-  Future<List<Operation>> reloadSMSOperations(
-      List<SmsMessage> smsCollection) async {
+  Future<List<Operation>> reloadSMSOperations(List<SmsMessage> smsCollection) async {
     List<Operation> operations = new List<Operation>();
 
     int idOperationSaldo = 0;
@@ -25,17 +24,16 @@ class OperationListProvider {
 
     // Remove duplicate List elements
     Set<Operation> set = new Set<Operation>();
-    set.addAll(operations.where((o) => o.isSaldoReal));
-    set.addAll(operations.where((o) => !o.isSaldoReal));
+    set.addAll(operations.where((o) => o.isSaldoReal));   // Agregar 1ro las operaciones con saldo real y fecha-hora
+    set.addAll(operations.where((o) => !o.isSaldoReal));  // Agregar el resto sin sobreescribir las que ya estaban en la lista
     List<Operation> operationsNonDuplicated = new List<Operation>.from(set);
 
     // Order List elements
-    List<Operation> operationsSorted = operationsNonDuplicated
-      ..sort((a, b) => b.fecha.compareTo(a.fecha));
+    List<Operation> operationsSorted = operationsNonDuplicated..sort((a, b) => b.fecha.compareTo(a.fecha));
 
     // Agregar los saldos restantes a las operaciones
-    List<Operation> operationsWithSaldo = addSaldoToOperations(
-        operationsSorted);
+    List<Operation> operationsWithSaldo = addSaldoToOperationsXMon(operationsSorted, MONEDA.CUP);
+    operationsWithSaldo = addSaldoToOperationsXMon(operationsWithSaldo, MONEDA.CUC);
 
     // Eliminar las operaciones de Consulta de Saldo
     operationsWithSaldo.removeWhere((op) =>
@@ -45,8 +43,7 @@ class OperationListProvider {
     return operationsWithSaldo;
   }
 
-  Future<List<Operation>> getOperationsXMoneda(List<Operation> allOperations,
-      MONEDA moneda) async {
+  Future<List<Operation>> getOperationsXMoneda(List<Operation> allOperations, MONEDA moneda) async {
     List<Operation> operations = new List<Operation>();
 
     allOperations.forEach((Operation op) {
@@ -131,9 +128,9 @@ class OperationListProvider {
     return list;
   }
 
-  static List<Operation> addSaldoToOperations(List<Operation> operationsSorted) {
+  static List<Operation> addSaldoToOperationsXMon(List<Operation> operationsSorted, MONEDA moneda) {
     double firstSaldo = 0.0;
-    for (final f in operationsSorted.where((o) => o.moneda == MONEDA.CUP)) {
+    for (final f in operationsSorted.where((o) => o.moneda == moneda)) {
       if (f.isSaldoReal) {
         firstSaldo += f.saldo;
         break;
@@ -144,37 +141,11 @@ class OperationListProvider {
     }
     double previousSaldo = 0.0;
     if (operationsSorted.length > 0) {
-      operationsSorted.where((o)=>o.moneda == MONEDA.CUP).first.saldo = firstSaldo;
+      operationsSorted.where((o)=>o.moneda == moneda).first.saldo = firstSaldo;
       previousSaldo = firstSaldo;
     }
     double previousImporte = 0.0;
-    operationsSorted.where((o)=>o.moneda == MONEDA.CUP).forEach((f) {
-      if (!f.isSaldoReal) {
-        f.naturaleza == NaturalezaOperacion.CREDITO
-            ? f.saldo = previousSaldo - previousImporte
-            : f.saldo = previousSaldo + previousImporte;
-      }
-      previousImporte = f.importe;
-      previousSaldo = f.saldo;
-    });
-
-    firstSaldo = 0.0;
-    for (final f in operationsSorted.where((o) => o.moneda == MONEDA.CUC)) {
-      if (f.isSaldoReal) {
-        firstSaldo += f.saldo;
-        break;
-      }
-      f.naturaleza == NaturalezaOperacion.CREDITO
-          ? firstSaldo += f.importe
-          : firstSaldo -= f.importe;
-    }
-    previousSaldo = 0.0;
-    if (operationsSorted.length > 0) {
-      operationsSorted.where((o)=>o.moneda == MONEDA.CUC).first.saldo = firstSaldo;
-      previousSaldo = firstSaldo;
-    }
-    previousImporte = 0.0;
-    operationsSorted.where((o)=>o.moneda == MONEDA.CUC).forEach((f) {
+    operationsSorted.where((o)=>o.moneda == moneda).forEach((f) {
       if (!f.isSaldoReal) {
         f.naturaleza == NaturalezaOperacion.CREDITO
             ? f.saldo = previousSaldo - previousImporte
@@ -186,87 +157,6 @@ class OperationListProvider {
     
     return operationsSorted;
   }
-
-//  static List<Operation> addSaldoToOperations(List<Operation> operationsSorted) {
-//    double lastSaldoCUP = -1.0;
-//    double firstSaldoCUP = -1.0;
-//    int posFirstSaldoCUP = 0;
-//
-//    double lastSaldoCUC = -1.0;
-//    double firstSaldoCUC = -1.0;
-//    int posFirstSaldoCUC = 0;
-//
-//    // Recorrer la lista para actualizar los saldos restantes
-//    for (int i = 0; i < operationsSorted.length; i++) {
-//      Operation operation = operationsSorted[i];
-//
-//      if (operation.isSaldoReal) {
-//        if(operation.moneda == MONEDA.CUP) {
-//          if (lastSaldoCUP == -1.0) {
-//            posFirstSaldoCUP = i;
-//            firstSaldoCUP = operation.saldo;
-//          }
-//          lastSaldoCUP = operation.saldo;
-//        }
-//        if (operation.moneda == MONEDA.CUC) {
-//          if (lastSaldoCUC == -1.0) {
-//            posFirstSaldoCUC = i;
-//            firstSaldoCUC = operation.saldo;
-//          }
-//          lastSaldoCUC = operation.saldo;
-//        }
-//      } else {
-//        if(operation.moneda == MONEDA.CUP) {
-//          if (operation.saldo < 0.0 && lastSaldoCUP > 0.0) {
-//            operation.saldo = castMoney(lastSaldoCUP);
-//            if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
-//              lastSaldoCUP = castMoney(lastSaldoCUP + operation.importe);
-//            } else {
-//              lastSaldoCUP = castMoney(lastSaldoCUP - operation.importe);
-//            }
-//          }
-//        }
-//        if(operation.moneda == MONEDA.CUC) {
-//          if (operation.saldo < 0.0 && lastSaldoCUC > 0.0) {
-//            operation.saldo = castMoney(lastSaldoCUC);
-//            if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
-//              lastSaldoCUC = castMoney(lastSaldoCUC + operation.importe);
-//            } else {
-//              lastSaldoCUC = castMoney(lastSaldoCUC - operation.importe);
-//            }
-//          }
-//        }
-//      }
-//    }
-//
-//    lastSaldoCUP = firstSaldoCUP;
-//    for (int i = posFirstSaldoCUP; i > 0; i--) {
-//      Operation operation = operationsSorted[i];
-//      if (operation.saldo < 0.0 && operation.moneda == MONEDA.CUP) {
-//        if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
-//          operation.saldo = castMoney(lastSaldoCUP - operation.importe);
-//        } else {
-//          operation.saldo = castMoney(lastSaldoCUP + operation.importe);
-//        }
-//        lastSaldoCUP = castMoney(operation.saldo);
-//      }
-//    }
-//
-//    lastSaldoCUC = firstSaldoCUC;
-//    for (int i = posFirstSaldoCUC; i > 0; i--) {
-//      Operation operation = operationsSorted[i];
-//      if (operation.saldo < 0.0 && operation.moneda == MONEDA.CUC) {
-//        if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
-//          operation.saldo = castMoney(lastSaldoCUC - operation.importe);
-//        } else {
-//          operation.saldo = castMoney(lastSaldoCUC + operation.importe);
-//        }
-//        lastSaldoCUC = castMoney(operation.saldo);
-//      }
-//    }
-//
-//    return operationsSorted;
-//  }
 
   static TipoSms getTipoSms(SmsMessage message) {
     if (message.body.contains("La consulta de saldo"))
@@ -356,66 +246,62 @@ class OperationListProvider {
     return (imp * 100).floor().roundToDouble() / 100;
   }
 
-  List<Object> getResumenOperaciones(List<Operation> operations,
-      DateTime date) {
+  List<Object> getResumenOperaciones(List<Operation> operations) {
     List<ResumeMonth> list = new List<ResumeMonth>();
 
-    for (int i = 0; i <= 3; i++) {
-      var year = date.year;
-      var month = date.month - i;
-      List<Operation> listOperations = new List<Operation>();
+    int month = operations.first.fecha.month;
+    int year = operations.first.fecha.year;
+    List<Operation> listOperations = new List<Operation>();
 
-      listOperations..addAll(operations);
-      listOperations.removeWhere((op) => (op.fecha.year != year));
-      listOperations.removeWhere((op) => (op.fecha.month != month));
+    operations.forEach((Operation operation){
+      if(operation.fecha.year != year || operation.fecha.month != month){
+        ResumeMonth resumenDelMes = generateResumeOperationsXMonth(listOperations);
+        list.add(resumenDelMes);
 
-      Set<TipoOperacion> set = new Set<TipoOperacion>();
-      listOperations.forEach((Operation operation) {
-        set.add(operation.tipoOperacion);
-      });
-      List<TipoOperacion> typeOperationsNonDuplicated = new List<
-          TipoOperacion>.from(set);
-      List<TipoOperacion> typeOperationsSorted = typeOperationsNonDuplicated
-        ..sort((a, b) => getOperationTitle(a).compareTo(getOperationTitle(b)));
+        month = operation.fecha.month;
+        year = operation.fecha.year;
+      }
 
-      double resumenDb = 0.0;
-      double resumenCr = 0.0;
-      listOperations.forEach((Operation operation) {
-        if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
-          resumenDb += operation.importe;
-        }
-        else {
-          resumenCr += operation.importe;
-        }
-      });
-
-      List<ResumeTypeOperation> listTypes = new List<ResumeTypeOperation>();
-
-      typeOperationsSorted.forEach((TipoOperacion tipoOp) {
-        double resumenTipOpDb = 0.0;
-        double resumenTipOpCr = 0.0;
-        listOperations.forEach((Operation op) {
-          if (op.tipoOperacion == tipoOp) {
-            if (op.naturaleza == NaturalezaOperacion.DEBITO) {
-              resumenTipOpDb += op.importe;
-            }
-            else {
-              resumenTipOpCr += op.importe;
-            }
-          }
-        });
-        ResumeTypeOperation typeOperation = new ResumeTypeOperation(
-            tipoOp, resumenTipOpCr, resumenTipOpDb);
-//        listTypes.add({'tipoOperacion':tipoOp,'impCre':resumenTipOpCr,'impDeb':resumenTipOpDb});
-        listTypes.add(typeOperation);
-      });
-
-      ResumeMonth resumeMonth = new ResumeMonth(
-          year, month, resumenCr, resumenDb, listTypes);
-//      list.add({'year':year,'month':month,'impCre':resumenCr,'impDeb':resumenDb,'tiposOperaciones':listTypes});
-      list.add(resumeMonth);
-    }
-
+      listOperations.add(operation);
+    });
     return list;
+  }
+
+  static ResumeMonth generateResumeOperationsXMonth(List<Operation> listOperations) {
+
+    Set<TipoOperacion> set = new Set<TipoOperacion>();
+    listOperations.forEach((Operation operation) {
+      set.add(operation.tipoOperacion);
+    });
+
+    List<TipoOperacion> typeOperationsNonDuplicated = new List<TipoOperacion>.from(set);
+    List<TipoOperacion> typeOperationsSorted = typeOperationsNonDuplicated
+      ..sort((a, b) => getOperationTitle(a).compareTo(getOperationTitle(b)));
+
+    double resumenDb = 0.0;
+    double resumenCr = 0.0;
+    listOperations.forEach((Operation op) {
+      op.naturaleza == NaturalezaOperacion.DEBITO
+          ? resumenDb += op.importe
+          : resumenCr += op.importe;
+    });
+
+    List<ResumeTypeOperation> listTypes = new List<ResumeTypeOperation>();
+    typeOperationsSorted.forEach((TipoOperacion tipoOp) {
+      double resumenTipOpDb = 0.0;
+      double resumenTipOpCr = 0.0;
+
+      listOperations.where((o)=>o.tipoOperacion == tipoOp).forEach((f) {
+        f.naturaleza == NaturalezaOperacion.DEBITO
+            ? resumenTipOpDb += f.importe
+            : resumenTipOpCr += f.importe;
+      });
+
+      ResumeTypeOperation typeOperation = new ResumeTypeOperation(tipoOp, resumenTipOpCr, resumenTipOpDb);
+      listTypes.add(typeOperation);
+    });
+
+    ResumeMonth resumeMonth = new ResumeMonth(listOperations.first.fecha.year, listOperations.first.fecha.month, resumenCr, resumenDb, listTypes);
+    return resumeMonth;
   }
 }

@@ -110,14 +110,14 @@ class _MyHomePageState extends State<MyHomePage> {
       _operacionesCUC = operaciones;
       print("OnLoadedCUC_OperationList");
 
-      _resumenOperacionesCUC = _opListProvider.getResumenOperaciones(_operacionesCUC, new DateTime.now());
+      _resumenOperacionesCUC = _opListProvider.getResumenOperaciones(_operacionesCUC);
       print("OnLoadedCUC_resumenOperacionesCUC");
     }
     if (operaciones[0].moneda == MONEDA.CUP) {
       _operacionesCUP = operaciones;
       print("OnLoadedCUP_OperationList");
 
-      _resumenOperacionesCUP = _opListProvider.getResumenOperaciones(_operacionesCUP, new DateTime.now());
+      _resumenOperacionesCUP = _opListProvider.getResumenOperaciones(_operacionesCUP);
       print("OnLoadedCUP_resumenOperacionesCUP");
     }
 
