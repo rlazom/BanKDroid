@@ -83,7 +83,7 @@ class SaldoActual extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               new Text(
-                "\$" + saldo.toString(),
+                "\$" + saldo.toStringAsFixed(2),
                 style: TextStyle(fontSize: 30.0),
               ),
               new Icon(
@@ -96,7 +96,7 @@ class SaldoActual extends StatelessWidget {
                     : Colors.lightGreen,
               ),
               new Text(
-                impLastOp.toString(),
+                impLastOp.toStringAsFixed(2),
                 style: TextStyle(
                   fontSize: 12.0,
                   color: natLastOp == NaturalezaOperacion.DEBITO
@@ -171,7 +171,7 @@ class ResumenMensual extends StatelessWidget {
                             ),
                           ),
                           new Text(
-                            ingresos.toString() + " CUP",
+                            ingresos.toStringAsFixed(2) + " CUP",
                             style: TextStyle(
                               fontSize: 19.0,
                             ),
@@ -197,7 +197,7 @@ class ResumenMensual extends StatelessWidget {
                             ),
                           ),
                           new Text(
-                            gastos.toString() + " CUP",
+                            gastos.toStringAsFixed(2) + " CUP",
                             style: TextStyle(
                               fontSize: 19.0,
                             ),
@@ -266,7 +266,7 @@ class OperacionGastoIngresoListItem extends StatelessWidget {
                       : new Row(
                           children: [
                             new Text(
-                              "+" + impCre.toString() + " CUP",
+                              "+" + impCre.toStringAsFixed(2) + " CUP",
                               style: TextStyle(
                                   fontSize: 13.0, color: Colors.lightGreen),
                             ),
@@ -277,7 +277,7 @@ class OperacionGastoIngresoListItem extends StatelessWidget {
                       : new Row(
                           children: [
                             new Text(
-                              "-" + impDeb.toString() + " CUP",
+                              "-" + impDeb.toStringAsFixed(2) + " CUP",
                               style: TextStyle(
                                   fontSize: 13.0, color: Colors.redAccent),
                             ),

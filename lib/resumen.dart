@@ -12,7 +12,6 @@ class ResumeTypeOperation{
   }
 }
 
-
 class ResumeMonth{
   int year;
   int month;

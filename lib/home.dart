@@ -91,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _reloadSMSOperations() {
     // Cargar la lista de mensajes
-    _opListProvider.ReadSms().then((messages) {
+    _opListProvider.readSms().then((messages) {
       _opListProvider.reloadSMSOperations(messages).then((allOperations) {
         _opListProvider
             .getOperationsXMoneda(allOperations, MONEDA.CUC)

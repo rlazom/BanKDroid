@@ -5,12 +5,13 @@ import 'dart:async';
 import 'package:sms/sms.dart';
 
 class OperationListProvider {
-  Future<List<SmsMessage>> ReadSms() async {
+  Future<List<SmsMessage>> readSms() async {
     SmsQuery query = new SmsQuery();
     return await query.querySms(address: "PAGOxMOVIL");
   }
 
-  Future<List<Operation>> reloadSMSOperations(List<SmsMessage> smsCollection) async {
+  Future<List<Operation>> reloadSMSOperations(
+      List<SmsMessage> smsCollection) async {
     List<Operation> operations = new List<Operation>();
 
     int idOperationSaldo = 0;
@@ -23,7 +24,9 @@ class OperationListProvider {
     });
 
     // Remove duplicate List elements
-    Set<Operation> set = new Set<Operation>.from(operations);
+    Set<Operation> set = new Set<Operation>();
+    set.addAll(operations.where((o) => o.isSaldoReal));
+    set.addAll(operations.where((o) => !o.isSaldoReal));
     List<Operation> operationsNonDuplicated = new List<Operation>.from(set);
 
     // Order List elements
@@ -31,16 +34,19 @@ class OperationListProvider {
       ..sort((a, b) => b.fecha.compareTo(a.fecha));
 
     // Agregar los saldos restantes a las operaciones
-    List<Operation> operationsWithSaldo = addSaldoToOperations(operationsSorted);
+    List<Operation> operationsWithSaldo = addSaldoToOperations(
+        operationsSorted);
 
     // Eliminar las operaciones de Consulta de Saldo
-    operationsWithSaldo.removeWhere((op) => op.tipoOperacion == TipoOperacion.DEFAULT);
+    operationsWithSaldo.removeWhere((op) =>
+    op.tipoOperacion == TipoOperacion.DEFAULT);
 
 //    return operationsSorted;
     return operationsWithSaldo;
   }
 
-  Future<List<Operation>> getOperationsXMoneda(List<Operation> allOperations, MONEDA moneda) async {
+  Future<List<Operation>> getOperationsXMoneda(List<Operation> allOperations,
+      MONEDA moneda) async {
     List<Operation> operations = new List<Operation>();
 
     allOperations.forEach((Operation op) {
@@ -53,7 +59,8 @@ class OperationListProvider {
     return getTipoSms(message) == TipoSms.CONSULTAR_SALDO;
   }
 
-  static List<Operation> smsToOperations(SmsMessage message, int idOperationSaldo) {
+  static List<Operation> smsToOperations(SmsMessage message,
+      int idOperationSaldo) {
     TipoSms tipoSms = getTipoSms(message);
     List<Operation> list = new List<Operation>();
 
@@ -125,85 +132,141 @@ class OperationListProvider {
   }
 
   static List<Operation> addSaldoToOperations(List<Operation> operationsSorted) {
-    double lastSaldoCUP = -1.0;
-    double firstSaldoCUP = -1.0;
-    int posFirstSaldoCUP = 0;
-
-    double lastSaldoCUC = -1.0;
-    double firstSaldoCUC = -1.0;
-    int posFirstSaldoCUC = 0;
-
-    // Recorrer la lista para actualizar los saldos restantes
-    for (int i = 0; i < operationsSorted.length; i++) {
-      Operation operation = operationsSorted[i];
-
-      if (operation.isSaldoReal) {
-        if(operation.moneda == MONEDA.CUP) {
-          if (lastSaldoCUP == -1.0) {
-            posFirstSaldoCUP = i;
-            firstSaldoCUP = operation.saldo;
-          }
-          lastSaldoCUP = operation.saldo;
-        }
-        if (operation.moneda == MONEDA.CUC) {
-          if (lastSaldoCUC == -1.0) {
-            posFirstSaldoCUC = i;
-            firstSaldoCUC = operation.saldo;
-          }
-          lastSaldoCUC = operation.saldo;
-        }
-      } else {
-        if(operation.moneda == MONEDA.CUP) {
-          if (operation.saldo < 0.0 && lastSaldoCUP > 0.0) {
-            operation.saldo = castMoney(lastSaldoCUP);
-            if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
-              lastSaldoCUP = castMoney(lastSaldoCUP + operation.importe);
-            } else {
-              lastSaldoCUP = castMoney(lastSaldoCUP - operation.importe);
-            }
-          }
-        }
-        if(operation.moneda == MONEDA.CUC) {
-          if (operation.saldo < 0.0 && lastSaldoCUC > 0.0) {
-            operation.saldo = castMoney(lastSaldoCUC);
-            if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
-              lastSaldoCUC = castMoney(lastSaldoCUC + operation.importe);
-            } else {
-              lastSaldoCUC = castMoney(lastSaldoCUC - operation.importe);
-            }
-          }
-        }
+    double firstSaldo = 0.0;
+    for (final f in operationsSorted.where((o) => o.moneda == MONEDA.CUP)) {
+      if (f.isSaldoReal) {
+        firstSaldo += f.saldo;
+        break;
       }
+      f.naturaleza == NaturalezaOperacion.CREDITO
+          ? firstSaldo += f.importe
+          : firstSaldo -= f.importe;
     }
-
-    lastSaldoCUP = firstSaldoCUP;
-    for (int i = posFirstSaldoCUP; i > 0; i--) {
-      Operation operation = operationsSorted[i];
-      if (operation.saldo < 0.0 && operation.moneda == MONEDA.CUP) {
-        if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
-          operation.saldo = castMoney(lastSaldoCUP - operation.importe);
-        } else {
-          operation.saldo = castMoney(lastSaldoCUP + operation.importe);
-        }
-        lastSaldoCUP = castMoney(operation.saldo);
+    double previousSaldo = 0.0;
+    if (operationsSorted.length > 0) {
+      operationsSorted.where((o)=>o.moneda == MONEDA.CUP).first.saldo = firstSaldo;
+      previousSaldo = firstSaldo;
+    }
+    double previousImporte = 0.0;
+    operationsSorted.where((o)=>o.moneda == MONEDA.CUP).forEach((f) {
+      if (!f.isSaldoReal) {
+        f.naturaleza == NaturalezaOperacion.CREDITO
+            ? f.saldo = previousSaldo - previousImporte
+            : f.saldo = previousSaldo + previousImporte;
       }
-    }
+      previousImporte = f.importe;
+      previousSaldo = f.saldo;
+    });
 
-    lastSaldoCUC = firstSaldoCUC;
-    for (int i = posFirstSaldoCUC; i > 0; i--) {
-      Operation operation = operationsSorted[i];
-      if (operation.saldo < 0.0 && operation.moneda == MONEDA.CUC) {
-        if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
-          operation.saldo = castMoney(lastSaldoCUC - operation.importe);
-        } else {
-          operation.saldo = castMoney(lastSaldoCUC + operation.importe);
-        }
-        lastSaldoCUC = castMoney(operation.saldo);
+    firstSaldo = 0.0;
+    for (final f in operationsSorted.where((o) => o.moneda == MONEDA.CUC)) {
+      if (f.isSaldoReal) {
+        firstSaldo += f.saldo;
+        break;
       }
+      f.naturaleza == NaturalezaOperacion.CREDITO
+          ? firstSaldo += f.importe
+          : firstSaldo -= f.importe;
     }
-
+    previousSaldo = 0.0;
+    if (operationsSorted.length > 0) {
+      operationsSorted.where((o)=>o.moneda == MONEDA.CUC).first.saldo = firstSaldo;
+      previousSaldo = firstSaldo;
+    }
+    previousImporte = 0.0;
+    operationsSorted.where((o)=>o.moneda == MONEDA.CUC).forEach((f) {
+      if (!f.isSaldoReal) {
+        f.naturaleza == NaturalezaOperacion.CREDITO
+            ? f.saldo = previousSaldo - previousImporte
+            : f.saldo = previousSaldo + previousImporte;
+      }
+      previousImporte = f.importe;
+      previousSaldo = f.saldo;
+    });
+    
     return operationsSorted;
   }
+
+//  static List<Operation> addSaldoToOperations(List<Operation> operationsSorted) {
+//    double lastSaldoCUP = -1.0;
+//    double firstSaldoCUP = -1.0;
+//    int posFirstSaldoCUP = 0;
+//
+//    double lastSaldoCUC = -1.0;
+//    double firstSaldoCUC = -1.0;
+//    int posFirstSaldoCUC = 0;
+//
+//    // Recorrer la lista para actualizar los saldos restantes
+//    for (int i = 0; i < operationsSorted.length; i++) {
+//      Operation operation = operationsSorted[i];
+//
+//      if (operation.isSaldoReal) {
+//        if(operation.moneda == MONEDA.CUP) {
+//          if (lastSaldoCUP == -1.0) {
+//            posFirstSaldoCUP = i;
+//            firstSaldoCUP = operation.saldo;
+//          }
+//          lastSaldoCUP = operation.saldo;
+//        }
+//        if (operation.moneda == MONEDA.CUC) {
+//          if (lastSaldoCUC == -1.0) {
+//            posFirstSaldoCUC = i;
+//            firstSaldoCUC = operation.saldo;
+//          }
+//          lastSaldoCUC = operation.saldo;
+//        }
+//      } else {
+//        if(operation.moneda == MONEDA.CUP) {
+//          if (operation.saldo < 0.0 && lastSaldoCUP > 0.0) {
+//            operation.saldo = castMoney(lastSaldoCUP);
+//            if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
+//              lastSaldoCUP = castMoney(lastSaldoCUP + operation.importe);
+//            } else {
+//              lastSaldoCUP = castMoney(lastSaldoCUP - operation.importe);
+//            }
+//          }
+//        }
+//        if(operation.moneda == MONEDA.CUC) {
+//          if (operation.saldo < 0.0 && lastSaldoCUC > 0.0) {
+//            operation.saldo = castMoney(lastSaldoCUC);
+//            if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
+//              lastSaldoCUC = castMoney(lastSaldoCUC + operation.importe);
+//            } else {
+//              lastSaldoCUC = castMoney(lastSaldoCUC - operation.importe);
+//            }
+//          }
+//        }
+//      }
+//    }
+//
+//    lastSaldoCUP = firstSaldoCUP;
+//    for (int i = posFirstSaldoCUP; i > 0; i--) {
+//      Operation operation = operationsSorted[i];
+//      if (operation.saldo < 0.0 && operation.moneda == MONEDA.CUP) {
+//        if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
+//          operation.saldo = castMoney(lastSaldoCUP - operation.importe);
+//        } else {
+//          operation.saldo = castMoney(lastSaldoCUP + operation.importe);
+//        }
+//        lastSaldoCUP = castMoney(operation.saldo);
+//      }
+//    }
+//
+//    lastSaldoCUC = firstSaldoCUC;
+//    for (int i = posFirstSaldoCUC; i > 0; i--) {
+//      Operation operation = operationsSorted[i];
+//      if (operation.saldo < 0.0 && operation.moneda == MONEDA.CUC) {
+//        if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
+//          operation.saldo = castMoney(lastSaldoCUC - operation.importe);
+//        } else {
+//          operation.saldo = castMoney(lastSaldoCUC + operation.importe);
+//        }
+//        lastSaldoCUC = castMoney(operation.saldo);
+//      }
+//    }
+//
+//    return operationsSorted;
+//  }
 
   static TipoSms getTipoSms(SmsMessage message) {
     if (message.body.contains("La consulta de saldo"))
@@ -247,29 +310,29 @@ class OperationListProvider {
   }
 
   static TipoOperacion getTipoOperacion(String cadena) {
-    TipoOperacion tipo_servicio = TipoOperacion.DEFAULT;
+    TipoOperacion tipoServicio = TipoOperacion.DEFAULT;
     if (cadena != null) {
       if (cadena.contains("AY"))
-        tipo_servicio = TipoOperacion.ATM;
+        tipoServicio = TipoOperacion.ATM;
       else if (cadena.contains("TELF"))
-        tipo_servicio = TipoOperacion.TELEFONO;
+        tipoServicio = TipoOperacion.TELEFONO;
       else if (cadena.contains("TELF") || cadena.contains("telef"))
-        tipo_servicio = TipoOperacion.TELEFONO;
+        tipoServicio = TipoOperacion.TELEFONO;
       else if (cadena.contains("ELEC") || cadena.contains("electricidad"))
-        tipo_servicio = TipoOperacion.ELECTRICIDAD;
+        tipoServicio = TipoOperacion.ELECTRICIDAD;
       else if (cadena.contains("MULT") || cadena.contains("YY"))
-        tipo_servicio = TipoOperacion.MULTA;
+        tipoServicio = TipoOperacion.MULTA;
       else if (cadena.contains("UU"))
-        tipo_servicio = TipoOperacion.AJUSTE;
+        tipoServicio = TipoOperacion.AJUSTE;
       else if (cadena.contains("TRAN"))
-        tipo_servicio = TipoOperacion.TRANSFERENCIA;
+        tipoServicio = TipoOperacion.TRANSFERENCIA;
       else if (cadena.contains("EV"))
-        tipo_servicio = TipoOperacion.SALARIO;
+        tipoServicio = TipoOperacion.SALARIO;
       else if (cadena.contains("IO"))
-        tipo_servicio = TipoOperacion.INTERES;
-      else if (cadena.contains("AP")) tipo_servicio = TipoOperacion.POS;
+        tipoServicio = TipoOperacion.INTERES;
+      else if (cadena.contains("AP")) tipoServicio = TipoOperacion.POS;
     }
-    return tipo_servicio;
+    return tipoServicio;
   }
 
   static NaturalezaOperacion getNaturalezaOperacion(String cadena) {
@@ -289,14 +352,15 @@ class OperationListProvider {
     return moneda;
   }
 
-  static double castMoney(double imp){
-    return (imp * 100).floor().roundToDouble()/100;
+  static double castMoney(double imp) {
+    return (imp * 100).floor().roundToDouble() / 100;
   }
 
-  List<Object> getResumenOperaciones(List<Operation> operations,DateTime date){
+  List<Object> getResumenOperaciones(List<Operation> operations,
+      DateTime date) {
     List<ResumeMonth> list = new List<ResumeMonth>();
 
-    for(int i = 0; i <= 3; i++){
+    for (int i = 0; i <= 3; i++) {
       var year = date.year;
       var month = date.month - i;
       List<Operation> listOperations = new List<Operation>();
@@ -309,17 +373,18 @@ class OperationListProvider {
       listOperations.forEach((Operation operation) {
         set.add(operation.tipoOperacion);
       });
-      List<TipoOperacion> typeOperationsNonDuplicated = new List<TipoOperacion>.from(set);
+      List<TipoOperacion> typeOperationsNonDuplicated = new List<
+          TipoOperacion>.from(set);
       List<TipoOperacion> typeOperationsSorted = typeOperationsNonDuplicated
         ..sort((a, b) => getOperationTitle(a).compareTo(getOperationTitle(b)));
 
       double resumenDb = 0.0;
       double resumenCr = 0.0;
       listOperations.forEach((Operation operation) {
-        if(operation.naturaleza == NaturalezaOperacion.DEBITO){
+        if (operation.naturaleza == NaturalezaOperacion.DEBITO) {
           resumenDb += operation.importe;
         }
-        else{
+        else {
           resumenCr += operation.importe;
         }
       });
@@ -330,21 +395,23 @@ class OperationListProvider {
         double resumenTipOpDb = 0.0;
         double resumenTipOpCr = 0.0;
         listOperations.forEach((Operation op) {
-          if(op.tipoOperacion == tipoOp){
-            if(op.naturaleza == NaturalezaOperacion.DEBITO){
+          if (op.tipoOperacion == tipoOp) {
+            if (op.naturaleza == NaturalezaOperacion.DEBITO) {
               resumenTipOpDb += op.importe;
             }
-            else{
+            else {
               resumenTipOpCr += op.importe;
             }
           }
         });
-        ResumeTypeOperation typeOperation = new ResumeTypeOperation(tipoOp, resumenTipOpCr, resumenTipOpDb);
+        ResumeTypeOperation typeOperation = new ResumeTypeOperation(
+            tipoOp, resumenTipOpCr, resumenTipOpDb);
 //        listTypes.add({'tipoOperacion':tipoOp,'impCre':resumenTipOpCr,'impDeb':resumenTipOpDb});
         listTypes.add(typeOperation);
       });
 
-      ResumeMonth resumeMonth = new ResumeMonth(year,month,resumenCr,resumenDb,listTypes);
+      ResumeMonth resumeMonth = new ResumeMonth(
+          year, month, resumenCr, resumenDb, listTypes);
 //      list.add({'year':year,'month':month,'impCre':resumenCr,'impDeb':resumenDb,'tiposOperaciones':listTypes});
       list.add(resumeMonth);
     }

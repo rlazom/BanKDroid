@@ -6,6 +6,7 @@ class OperationListItem extends StatelessWidget {
   final String idOperacion;
   final double importe;
   final double saldo;
+  final bool isSaldoReal;
   final NaturalezaOperacion naturalezaOperacion;
   final MONEDA moneda;
   final DateTime date;
@@ -14,6 +15,7 @@ class OperationListItem extends StatelessWidget {
   const OperationListItem({this.idOperacion,
     this.importe,
     this.saldo,
+    this.isSaldoReal,
     this.naturalezaOperacion,
     this.moneda,
     this.date,
@@ -31,7 +33,7 @@ class OperationListItem extends StatelessWidget {
         children: [
           new Text(
             (naturalezaOperacion == NaturalezaOperacion.DEBITO ? '-' : '+') +
-                importe.toString() +
+                importe.toStringAsFixed(2) +
                 " " +
                 getMonedaStr(moneda),
             style: TextStyle(
@@ -39,7 +41,7 @@ class OperationListItem extends StatelessWidget {
               fontSize: 15.0,
             ),
           ),
-          new Text(saldo.toString(),style: TextStyle(color: Colors.black38),),
+          new Text(saldo.toStringAsFixed(2),style: TextStyle(color: isSaldoReal?Colors.black:Colors.black38,),),
         ],
       ),
       onTap: () {
@@ -60,7 +62,7 @@ class OperationListItem extends StatelessWidget {
                       Container(
                         margin: const EdgeInsets.only(top: 38.0),
                         child: new Text(
-                          importe.toString() + " " + getMonedaStr(moneda),
+                          importe.toStringAsFixed(2) + " " + getMonedaStr(moneda),
                         ),
                       ),
                     ]),

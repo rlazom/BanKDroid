@@ -18,7 +18,7 @@ class OperationList extends StatelessWidget {
 //          padding: EdgeInsets.only(top: 2.0,bottom: -1.0),
           itemCount: operaciones.length,
           itemBuilder: (context, index) {
-            if (index.isOdd) return new Divider(height: 0.0,);
+            //if (index.isOdd) return new Divider(height: 0.0,);
             return new OperationListItem(
               idOperacion: operaciones[index].idOperacion,
               tipoOperacion: operaciones[index].tipoOperacion,
@@ -26,6 +26,7 @@ class OperationList extends StatelessWidget {
               moneda: operaciones[index].moneda,
               importe: operaciones[index].importe,
               saldo: operaciones[index].saldo,
+              isSaldoReal: operaciones[index].isSaldoReal,
               date: operaciones[index].fecha,
             );
           }),
