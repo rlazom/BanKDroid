@@ -54,7 +54,11 @@ class _MyHomePageState extends State<MyHomePage> {
     final res = await Permission.requestPermissions(permissionList).then((resultValues){
 
       if(resultValues.firstWhere((rv) => rv.permissionName == PermissionName.ReadSms).permissionStatus == PermissionStatus.allow){
-        _canReadSMS = true;
+        setState(() {
+          _canReadSMS = true;
+          _loading = true;
+        });
+
         _initSMSListener();
         _reloadSMSOperations();
       }
@@ -133,40 +137,27 @@ class _MyHomePageState extends State<MyHomePage> {
   void _reloadSMSOperations() {
     // Cargar la lista de mensajes
     _opListProvider.readSms().then((messages) {
-      _opListProvider.reloadSMSOperations(messages).then((allOperations) {
-        _opListProvider
-            .getOperationsXMoneda(allOperations, MONEDA.CUC)
-            .then(_onReloadSMSOperations);
-        _opListProvider
-            .getOperationsXMoneda(allOperations, MONEDA.CUP)
-            .then(_onReloadSMSOperations);
-      });
+      _opListProvider.reloadSMSOperations(messages).then(_onReloadSMSOperations);
     });
   }
 
   void _onReloadSMSOperations(List<Operation> operaciones) {
-    _operacionesFull = operaciones;
+    _operacionesCUP = operaciones.where((o) => o.moneda == MONEDA.CUP).toList();
+    print("OnLoadedCUP_OperationList");
+    _resumenOperacionesCUP = _operacionesCUP.length > 0
+        ? _opListProvider.getResumenOperaciones(_operacionesCUP) : [];
+    print("OnLoadedCUP_resumenOperacionesCUP");
 
-    if (operaciones[0].moneda == MONEDA.CUC) {
-      _operacionesCUC = operaciones;
-      print("OnLoadedCUC_OperationList");
+    _operacionesCUC = operaciones.where((o) => o.moneda == MONEDA.CUC).toList();
+    print("OnLoadedCUC_OperationList");
+    _resumenOperacionesCUC = _operacionesCUC.length > 0
+        ? _opListProvider.getResumenOperaciones(_operacionesCUC) : [];
+    print("OnLoadedCUC_resumenOperacionesCUP");
 
-      _resumenOperacionesCUC = _opListProvider.getResumenOperaciones(_operacionesCUC);
-      print("OnLoadedCUC_resumenOperacionesCUC");
-    }
-    if (operaciones[0].moneda == MONEDA.CUP) {
-      _operacionesCUP = operaciones;
-      print("OnLoadedCUP_OperationList");
-
-      _resumenOperacionesCUP = _opListProvider.getResumenOperaciones(_operacionesCUP);
-      print("OnLoadedCUP_resumenOperacionesCUP");
-    }
-
-    if (_operacionesFull != null &&
+    if (_operacionesCUP != null &&
         _operacionesCUC != null &&
-        _operacionesCUP != null &&
-        _resumenOperacionesCUC != null &&
-        _resumenOperacionesCUP != null) {
+        _resumenOperacionesCUP != null &&
+        _resumenOperacionesCUC != null) {
       setState(() {
         _loading = false;
       });

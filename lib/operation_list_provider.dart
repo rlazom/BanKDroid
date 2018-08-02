@@ -43,15 +43,6 @@ class OperationListProvider {
     return operationsWithSaldo;
   }
 
-  Future<List<Operation>> getOperationsXMoneda(List<Operation> allOperations, MONEDA moneda) async {
-    List<Operation> operations = new List<Operation>();
-
-    allOperations.forEach((Operation op) {
-      if (op.moneda == moneda) operations..add(op);
-    });
-    return operations;
-  }
-
   static bool esConsultaDeSaldo(SmsMessage message) {
     return getTipoSms(message) == TipoSms.CONSULTAR_SALDO;
   }
