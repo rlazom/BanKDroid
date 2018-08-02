@@ -13,18 +13,8 @@ class BottomAppBarWidget extends StatelessWidget {
     return BottomAppBar(
       hasNotch: true,
       child: new Row(
-//          mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-//          IconButton(
-//            icon: new Icon(
-//              Icons.monetization_on,
-//              color: disable ? null : Colors.black87,
-//            ),
-//            tooltip: "Consultar Saldo",
-//            onPressed: disable ? null : _consultarSaldo,
-//          ),
           IconButton(
             icon: new Icon(
               Icons.format_list_bulleted,
@@ -47,13 +37,13 @@ class BottomAppBarWidget extends StatelessWidget {
   }
 
   _consultarSaldo() {
-//    _initCall("*444*70%23");
+//    _initCall("*444*46%23");
     print("Consultar Saldo");
   }
 
   _ultimasOperaciones() {
-//    _initCall("*444*70%23");
-    print("Consultar Saldo");
+    _initCall("*444*48%23");
+    print("Ultimas Operaciones");
   }
 
   _operaciones() {

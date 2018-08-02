@@ -265,7 +265,7 @@ class OperationListProvider {
 
       listOperations.add(operation);
     });
-    
+
     ResumeMonth resumenDelMes = generateResumeOperationsXMonth(listOperations);
     list.add(resumenDelMes);
 

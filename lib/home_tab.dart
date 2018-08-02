@@ -121,13 +121,6 @@ class SaldoActual extends StatelessWidget {
   }
 }
 
-//class ResumenDetalles extends StatelessWidget {
-//  @override
-//  Widget build(BuildContext context) {
-//    return Container();
-//  }
-//}
-
 class ResumenMensual extends StatelessWidget {
   final DateTime fecha;
   final double ingresos;

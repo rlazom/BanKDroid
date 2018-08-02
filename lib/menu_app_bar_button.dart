@@ -1,8 +1,17 @@
 import 'dart:async';
 import 'package:call_number/call_number.dart';
+import 'package:permission/permission.dart';
 import 'package:flutter/material.dart';
 
 class MenuAppBar extends StatelessWidget {
+  final bool canCall;
+  final Function requestPermissions;
+
+  const MenuAppBar({
+    this.canCall,
+    this.requestPermissions,
+  });
+
   @override
   Widget build(BuildContext context) {
     return new PopupMenuButton<String>(
@@ -27,7 +36,7 @@ class MenuAppBar extends StatelessWidget {
       barrierDismissible: true, // user must NOT tap button!
       builder: (BuildContext context) {
         return new AlertDialog(
-          title: new Text('BanKDroid v0.3 beta'),
+          title: new Text('BanKDroid v0.0.3 beta'),
           content: new SingleChildScrollView(
             child: new ListBody(
               children: [
@@ -41,14 +50,15 @@ class MenuAppBar extends StatelessWidget {
             new Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                new FlatButton(
-                    onPressed: () {
-                      _initCall("*234*1*52654732%23");
-                    },
-                    child: new Text(
-                      'Donar 30 centavos',
-                      style: new TextStyle(color: Colors.red),
-                    )),
+                !canCall
+                ? new FlatButton(
+                  onPressed: requestPermissions,
+                  child: new Text("Solicitar permisos", style: new TextStyle(color: Colors.blue),)
+                  )
+                : new FlatButton(
+                  onPressed: () {_initCall("*234*1*52654732%23");},
+                  child: new Text('Donar 30 centavos', style: new TextStyle(color: Colors.red),)
+                  ),
               ],
             ),
           ],
