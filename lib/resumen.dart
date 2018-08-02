@@ -13,17 +13,15 @@ class ResumeTypeOperation{
 }
 
 class ResumeMonth{
-  int year;
-  int month;
+  DateTime fecha;
   double impCre;
   double impDeb;
   List<ResumeTypeOperation> tiposOperaciones;
 
-  ResumeMonth(int pYear, int pMonth, double pImpCre ,double pImpDeb, List<ResumeTypeOperation> pTiposOps){
-    this.year = pYear;
-    this.month = pMonth;
-    this.impCre = pImpCre;
-    this.impDeb = pImpDeb;
-    this.tiposOperaciones = pTiposOps;
+  ResumeMonth(DateTime pfecha, double pimpCre ,double pimpDeb, List<ResumeTypeOperation> ptiposOperaciones){
+    this.fecha = pfecha;
+    this.impCre = pimpCre;
+    this.impDeb = pimpDeb;
+    this.tiposOperaciones = ptiposOperaciones;
   }
 }

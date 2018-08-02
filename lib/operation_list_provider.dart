@@ -258,12 +258,17 @@ class OperationListProvider {
         ResumeMonth resumenDelMes = generateResumeOperationsXMonth(listOperations);
         list.add(resumenDelMes);
 
+        listOperations.clear();
         month = operation.fecha.month;
         year = operation.fecha.year;
       }
 
       listOperations.add(operation);
     });
+    
+    ResumeMonth resumenDelMes = generateResumeOperationsXMonth(listOperations);
+    list.add(resumenDelMes);
+
     return list;
   }
 
@@ -301,7 +306,7 @@ class OperationListProvider {
       listTypes.add(typeOperation);
     });
 
-    ResumeMonth resumeMonth = new ResumeMonth(listOperations.first.fecha.year, listOperations.first.fecha.month, resumenCr, resumenDb, listTypes);
+    ResumeMonth resumeMonth = new ResumeMonth(listOperations.first.fecha, resumenCr, resumenDb, listTypes);
     return resumeMonth;
   }
 }

@@ -19,33 +19,35 @@ class HomeDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     List<Widget> dashboardWidgets = [
       SaldoActual(
         saldo: lastOperationCUP.saldo,
         impLastOp: lastOperationCUP.importe,
         natLastOp: lastOperationCUP.naturaleza,
       ),
-      ResumenMensual(
-        ingresos: resumeOperationsCUP[0].impCre,
-        gastos: resumeOperationsCUP[0].impDeb,
-      )
     ];
 
-    resumeOperationsCUP[0].tiposOperaciones.forEach((operationType) {
-      dashboardWidgets.add(OperacionGastoIngresoListItem(
-        tipoOperacion: operationType.tipoOperacion,
-        impCre: operationType.impCre,
-        impDeb: operationType.impDeb,
-      ));
-    });
+    resumeOperationsCUP.forEach((resumenMensual) {
+      dashboardWidgets.add(
+        ResumenMensual(
+          fecha: resumenMensual.fecha,
+          ingresos: resumenMensual.impCre,
+          gastos: resumenMensual.impDeb,
+        )
+      );
 
-//    resumeOperationsCUP.forEach((resumenMensual) {
-//      dashboardWidgets.add(OperacionGastoIngresoListItem(
-//        tipoOperacion: operationType.tipoOperacion,
-//        impCre: operationType.impCre,
-//        impDeb: operationType.impDeb,
-//      ));
-//    });
+      resumenMensual.tiposOperaciones.forEach((operationType){
+        dashboardWidgets.add(
+          OperacionGastoIngresoListItem(
+            tipoOperacion: operationType.tipoOperacion,
+            impCre: operationType.impCre,
+            impDeb: operationType.impDeb,
+          )
+        );
+      });
+//      dashboardWidgets.add(new Divider(height: 5.0,));
+    });
 
     return Scrollbar(
       child: ListView(
@@ -119,18 +121,23 @@ class SaldoActual extends StatelessWidget {
   }
 }
 
-class ResumenDetalles extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container();
-  }
-}
+//class ResumenDetalles extends StatelessWidget {
+//  @override
+//  Widget build(BuildContext context) {
+//    return Container();
+//  }
+//}
 
 class ResumenMensual extends StatelessWidget {
+  final DateTime fecha;
   final double ingresos;
   final double gastos;
 
-  const ResumenMensual({this.ingresos, this.gastos});
+  const ResumenMensual({
+    this.fecha,
+    this.ingresos,
+    this.gastos
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +152,7 @@ class ResumenMensual extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   new Expanded(child: new Text("Resumen Mensual: ")),
-                  new Text(new DateFormat('MMMM yyyy').format(DateTime.now())),
+                  new Text(new DateFormat('MMMM yyyy').format(fecha)),
                   new Icon(
                     ingresos - gastos == 0
                         ? Icons.trending_flat
@@ -185,7 +192,8 @@ class ResumenMensual extends StatelessWidget {
                             ),
                           ),
                           new Text(
-                            ingresos.toStringAsFixed(2) + " CUP",
+                            ingresos.toStringAsFixed(2),
+//                            ingresos.toStringAsFixed(2) + " CUP",
                             style: TextStyle(
                               fontSize: 19.0,
                             ),
@@ -211,7 +219,8 @@ class ResumenMensual extends StatelessWidget {
                             ),
                           ),
                           new Text(
-                            gastos.toStringAsFixed(2) + " CUP",
+                            gastos.toStringAsFixed(2),
+//                            gastos.toStringAsFixed(2) + " CUP",
                             style: TextStyle(
                               fontSize: 19.0,
                             ),

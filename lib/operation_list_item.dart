@@ -12,44 +12,54 @@ class OperationListItem extends StatelessWidget {
   final DateTime date;
   final TipoOperacion tipoOperacion;
 
-  const OperationListItem({this.idOperacion,
-    this.importe,
-    this.saldo,
-    this.isSaldoReal,
-    this.naturalezaOperacion,
-    this.moneda,
-    this.date,
-    this.tipoOperacion});
+  const OperationListItem(
+      {this.idOperacion,
+      this.importe,
+      this.saldo,
+      this.isSaldoReal,
+      this.naturalezaOperacion,
+      this.moneda,
+      this.date,
+      this.tipoOperacion});
 
   @override
   Widget build(BuildContext context) {
-    return new ListTile(
-      leading: new Icon(getIconData(tipoOperacion),
-          color: Colors.grey, size: 40.0),
-      title: new Text(getOperationTitle(tipoOperacion)),
-      subtitle: new Text(new DateFormat('EEE, d MMM yyyy').format(date)),
-      trailing: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          new Text(
-            (naturalezaOperacion == NaturalezaOperacion.DEBITO ? '-' : '+') +
-                importe.toStringAsFixed(2) +
-                " " +
-                getMonedaStr(moneda),
-            style: TextStyle(
-              color: getIconColor(naturalezaOperacion),
-              fontSize: 15.0,
-            ),
+    return Column(
+      children: [
+        new ListTile(
+          leading: new Icon(getIconData(tipoOperacion),
+              color: Colors.grey, size: 40.0),
+          title: new Text(getOperationTitle(tipoOperacion)),
+          subtitle: new Text(new DateFormat('EEE, d MMM yyyy').format(date)),
+          trailing: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              new Text(
+                (naturalezaOperacion == NaturalezaOperacion.DEBITO
+                        ? '-'
+                        : '+') +
+                    importe.toStringAsFixed(2) +
+                    " " +
+                    getMonedaStr(moneda),
+                style: TextStyle(
+                  color: getIconColor(naturalezaOperacion),
+                  fontSize: 15.0,
+                ),
+              ),
+              new Text(
+                saldo.toStringAsFixed(2),
+                style: TextStyle(
+                  color: isSaldoReal ? Colors.black : Colors.black38,
+                ),
+              ),
+            ],
           ),
-          new Text(saldo.toStringAsFixed(2),style: TextStyle(color: isSaldoReal?Colors.black:Colors.black38,),),
-        ],
-      ),
-      onTap: () {
-        showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return new Dialog(
-                  child: new ListTile(
+          onTap: () {
+            showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return new Dialog(
+                      child: new ListTile(
                     leading: new Stack(children: [
                       Container(
                         margin: const EdgeInsets.only(left: 8.0),
@@ -62,7 +72,9 @@ class OperationListItem extends StatelessWidget {
                       Container(
                         margin: const EdgeInsets.only(top: 38.0),
                         child: new Text(
-                          importe.toStringAsFixed(2) + " " + getMonedaStr(moneda),
+                          importe.toStringAsFixed(2) +
+                              " " +
+                              getMonedaStr(moneda),
                         ),
                       ),
                     ]),
@@ -84,8 +96,13 @@ class OperationListItem extends StatelessWidget {
                       ],
                     ),
                   ));
-            });
-      },
+                });
+          },
+        ),
+        new Divider(
+          height: 0.0,
+        ),
+      ],
     );
   }
 }
