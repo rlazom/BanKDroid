@@ -92,7 +92,7 @@ class SaldoActual extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               new Text(
-                "\$" + saldo.toStringAsFixed(2),
+                "\$ " + saldo.toStringAsFixed(2),
                 style: TextStyle(fontSize: 30.0),
               ),
               new Icon(
@@ -151,8 +151,8 @@ class ResumenMensual extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  new Expanded(child: new Text("Resumen Mensual: ")),
-                  new Text(new DateFormat('MMMM yyyy').format(fecha)),
+                  new Expanded(child: new Text(new DateFormat('MMMM yyyy').format(fecha))),
+                  new Text((ingresos - gastos).abs().toStringAsFixed(2)),
                   new Icon(
                     ingresos - gastos == 0
                         ? Icons.trending_flat
@@ -204,13 +204,8 @@ class ResumenMensual extends StatelessWidget {
                   ),
                   new Row(
                     children: [
-                      new Icon(
-                        Icons.arrow_downward,
-                        size: 38.0,
-                        color: Colors.redAccent,
-                      ),
                       new Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           new Text(
                             "Gastos",
@@ -226,6 +221,11 @@ class ResumenMensual extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                      new Icon(
+                        Icons.arrow_downward,
+                        size: 38.0,
+                        color: Colors.redAccent,
                       ),
                     ],
                   ),
