@@ -9,6 +9,7 @@ class Operation{
   double importe;
   double saldo;
   bool isSaldoReal;
+  String observaciones;
 
   Operation(){
     this.idOperacion = '';
@@ -19,6 +20,7 @@ class Operation{
     this.importe = 0.00;
     this.saldo = -1.00;
     this.isSaldoReal = false;
+    this.observaciones = '';
   }
 
   @override
@@ -30,6 +32,8 @@ class Operation{
   }
 }
 
+const Color kColorDebito = Colors.redAccent;
+const Color kColorCredito = Colors.lightGreen;
 
 enum TipoSms{
   CONSULTAR_SALDO,
@@ -94,9 +98,7 @@ IconData getIconData(TipoOperacion tipoOperacion) {
 }
 
 Color getIconColor(NaturalezaOperacion naturaleza) {
-  return naturaleza == NaturalezaOperacion.DEBITO
-      ? Colors.redAccent
-      : Colors.lightGreen;
+  return naturaleza == NaturalezaOperacion.DEBITO ? kColorDebito : kColorCredito;
 }
 
 String getOperationTitle(TipoOperacion tipoOperacion) {

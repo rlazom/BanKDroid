@@ -1,56 +1,127 @@
+import 'ussd_methods.dart';
 import 'resumen.dart';
 import 'operation.dart';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class HomeDashboard extends StatelessWidget {
+class HomeDashboard extends StatefulWidget {
+  final bool conected;
+  final double saldoCUP;
+  final double saldoCUC;
   final Operation lastOperationCUP;
   final Operation lastOperationCUC;
   final List<ResumeMonth> resumeOperationsCUP;
   final List<ResumeMonth> resumeOperationsCUC;
+  final ScrollController hideButtonController;
 
   const HomeDashboard({
+    this.conected,
+    this.saldoCUP,
+    this.saldoCUC,
     this.lastOperationCUP,
     this.lastOperationCUC,
     this.resumeOperationsCUP,
     this.resumeOperationsCUC,
+    this.hideButtonController,
   });
 
   @override
+  _HomeDashboardState createState() => new _HomeDashboardState();
+}
+
+class _HomeDashboardState extends State<HomeDashboard> {
+  bool isCurrencyCUP = true;
+
+  @override
   Widget build(BuildContext context) {
+    List<Widget> dashboardWidgets = new List<Widget>();
+    int cantLists =
+        (widget.saldoCUP != null ? 1 : 0) + (widget.saldoCUC != null ? 1 : 0);
 
-    List<Widget> dashboardWidgets = [
-      SaldoActual(
-        saldo: lastOperationCUP.saldo,
-        impLastOp: lastOperationCUP.importe,
-        natLastOp: lastOperationCUP.naturaleza,
-      ),
-    ];
+    if (widget.lastOperationCUP != null || widget.lastOperationCUC != null) {
+      dashboardWidgets.add(SaldoActual(
+        saldo: isCurrencyCUP ? widget.saldoCUP : widget.saldoCUC,
+        impLastOp: isCurrencyCUP
+            ? widget.lastOperationCUP != null
+                ? widget.lastOperationCUP.importe
+                : null
+            : widget.lastOperationCUC != null
+                ? widget.lastOperationCUC.importe
+                : null,
+        natLastOp: isCurrencyCUP
+            ? widget.lastOperationCUP != null
+                ? widget.lastOperationCUP.naturaleza
+                : null
+            : widget.lastOperationCUC != null
+                ? widget.lastOperationCUC.naturaleza
+                : null,
+        moneda: isCurrencyCUP ? MONEDA.CUP : MONEDA.CUC,
+        cantLists: cantLists,
+        onToggleCurrency: onToggleCurrency,
+      ));
 
-    resumeOperationsCUP.forEach((resumenMensual) {
-      dashboardWidgets.add(
-        ResumenMensual(
-          fecha: resumenMensual.fecha,
-          ingresos: resumenMensual.impCre,
-          gastos: resumenMensual.impDeb,
-        )
+      List<ResumeMonth> resume = isCurrencyCUP
+          ? widget.resumeOperationsCUP
+          : widget.resumeOperationsCUC;
+
+      if (resume.isNotEmpty) {
+        resume.forEach((resumenMensual) {
+          dashboardWidgets.add(ResumenMensual(
+            fecha: resumenMensual.fecha,
+            ingresos: resumenMensual.impCre,
+            gastos: resumenMensual.impDeb,
+          ));
+
+          resumenMensual.tiposOperaciones.forEach((operationType) {
+            dashboardWidgets.add(OperacionGastoIngresoListItem(
+              tipoOperacion: operationType.tipoOperacion,
+              impCre: operationType.impCre,
+              impDeb: operationType.impDeb,
+            ));
+          });
+          dashboardWidgets.add(Padding(
+            padding: const EdgeInsets.only(top: 10.0),
+            child: new Divider(
+              height: 10.0,
+            ),
+          ));
+        });
+      }
+    } else {
+      dashboardWidgets.addAll([
+        new Icon(
+          Icons.speaker_notes_off,
+          size: 50.0,
+          color: Colors.black54,
+        ),
+        new Text("Sin Datos en sus SMS"),
+        new Padding(
+          padding: const EdgeInsets.only(bottom: 10.0),
+          child: new Text(widget.conected
+              ? "Click Aqui "
+              : "Conéctese " + "para solicitar Ultimas Operaciones"),
+        ),
+        new FloatingActionButton(
+            onPressed: widget.conected ? callUltimasOperaciones : null,
+            backgroundColor: widget.conected ? Colors.blue : Colors.grey,
+            mini: true,
+            child: new Icon(
+              Icons.refresh,
+            )),
+      ]);
+
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: dashboardWidgets,
+        ),
       );
-
-      resumenMensual.tiposOperaciones.forEach((operationType){
-        dashboardWidgets.add(
-          OperacionGastoIngresoListItem(
-            tipoOperacion: operationType.tipoOperacion,
-            impCre: operationType.impCre,
-            impDeb: operationType.impDeb,
-          )
-        );
-      });
-//      dashboardWidgets.add(new Divider(height: 5.0,));
-    });
+    }
 
     return Scrollbar(
       child: ListView(
+        controller: widget.hideButtonController,
         children: [
           new Column(
             children: dashboardWidgets,
@@ -59,17 +130,32 @@ class HomeDashboard extends StatelessWidget {
       ),
     );
   }
+
+  void onToggleCurrency() {
+    if ((this.isCurrencyCUP && widget.saldoCUC != null) ||
+        (!this.isCurrencyCUP && widget.saldoCUP != null)) {
+      setState(() {
+        this.isCurrencyCUP = !this.isCurrencyCUP;
+      });
+    }
+  }
 }
 
 class SaldoActual extends StatelessWidget {
   final double saldo;
   final double impLastOp;
   final NaturalezaOperacion natLastOp;
+  final MONEDA moneda;
+  final Function onToggleCurrency;
+  final int cantLists;
 
   const SaldoActual({
     this.saldo,
     this.impLastOp,
     this.natLastOp,
+    this.moneda,
+    this.onToggleCurrency,
+    this.cantLists,
   });
 
   @override
@@ -92,25 +178,53 @@ class SaldoActual extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               new Text(
-                "\$ " + saldo.toStringAsFixed(2),
+                '\$ ' + saldo.toStringAsFixed(2),
                 style: TextStyle(fontSize: 30.0),
               ),
-              new Icon(
-                natLastOp == NaturalezaOperacion.DEBITO
-                    ? Icons.arrow_drop_down
-                    : Icons.arrow_drop_up,
-                size: 12.0,
-                color: natLastOp == NaturalezaOperacion.DEBITO
-                    ? Colors.redAccent
-                    : Colors.lightGreen,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  new Text(
+                    getMonedaStr(moneda),
+                    style: TextStyle(
+                      fontSize: 15.0,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      new Icon(
+                        impLastOp == null
+                            ? null
+                            : natLastOp == NaturalezaOperacion.DEBITO
+                            ? Icons.arrow_drop_down
+                            : Icons.arrow_drop_up,
+                        size: 12.0,
+                        color: getIconColor(natLastOp),
+                      ),
+                      new Text(
+                        impLastOp == null ? '' : impLastOp.toStringAsFixed(2),
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: natLastOp == NaturalezaOperacion.DEBITO
+                              ? kColorDebito
+                              : kColorCredito,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              new Text(
-                impLastOp.toStringAsFixed(2),
-                style: TextStyle(
-                  fontSize: 12.0,
-                  color: natLastOp == NaturalezaOperacion.DEBITO
-                      ? Colors.redAccent
-                      : Colors.lightGreen,
+              Padding(
+                padding: const EdgeInsets.only(left: 10.0),
+                child: FloatingActionButton(
+                  elevation: cantLists == 2 ? 1.0 : 0.0,
+                  tooltip: cantLists != 2 ? "" : "Cambiar Moneda",
+                  child: new Icon(Icons.repeat),
+//                  child: new Text(getMonedaStr(moneda)),
+                  backgroundColor: cantLists == 2 ? Colors.blue : Colors.grey,
+                  mini: true,
+                  onPressed: cantLists == 2 ? onToggleCurrency : null,
                 ),
               ),
             ],
@@ -126,11 +240,7 @@ class ResumenMensual extends StatelessWidget {
   final double ingresos;
   final double gastos;
 
-  const ResumenMensual({
-    this.fecha,
-    this.ingresos,
-    this.gastos
-  });
+  const ResumenMensual({this.fecha, this.ingresos, this.gastos});
 
   @override
   Widget build(BuildContext context) {
@@ -144,8 +254,11 @@ class ResumenMensual extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  new Expanded(child: new Text(new DateFormat('MMMM yyyy').format(fecha))),
-                  new Text((ingresos - gastos).abs().toStringAsFixed(2)),
+                  new Expanded(
+                      child: new Text(new DateFormat('MMMM yyyy').format(fecha),
+                          style: TextStyle(color: Colors.black54))),
+                  new Text((ingresos - gastos).abs().toStringAsFixed(2),
+                      style: TextStyle(color: Colors.black54, fontSize: 11.0)),
                   new Icon(
                     ingresos - gastos == 0
                         ? Icons.trending_flat

@@ -5,9 +5,11 @@ import 'operation.dart';
 class OperationList extends StatelessWidget {
 
   final List<Operation> operaciones;
+  final ScrollController hideButtonController;
 
   const OperationList({
-    this.operaciones
+    this.operaciones,
+    this.hideButtonController,
   });
 
   @override
@@ -15,6 +17,7 @@ class OperationList extends StatelessWidget {
     return new Scrollbar(
       child: new ListView.builder(
           padding: kMaterialListPadding,
+          controller: hideButtonController,
 //          padding: EdgeInsets.only(top: 2.0,bottom: -1.0),
           itemCount: operaciones.length,
           itemBuilder: (context, index) {
@@ -28,6 +31,7 @@ class OperationList extends StatelessWidget {
               saldo: operaciones[index].saldo,
               isSaldoReal: operaciones[index].isSaldoReal,
               date: operaciones[index].fecha,
+              obs: operaciones[index].observaciones,
             );
           }),
     );

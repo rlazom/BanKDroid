@@ -5,9 +5,29 @@ import 'dart:async';
 import 'package:sms/sms.dart';
 
 class OperationListProvider {
+  double saldoCUP;
+  double saldoCUC;
+
   Future<List<SmsMessage>> readSms() async {
     SmsQuery query = new SmsQuery();
     return await query.querySms(address: "PAGOxMOVIL");
+  }
+
+  bool isAlreadyConected(List<SmsMessage> smsCollection) {
+    if (smsCollection.any((sms) => sms.body.contains("autenticado"))) {
+      smsCollection = smsCollection
+        ..sort((a, b) => b.dateSent.compareTo(a.dateSent));
+      DateTime dateSent = smsCollection
+          .firstWhere((sms) => sms.body.contains("autenticado"))
+          .dateSent;
+
+      int diff = DateTime.now().difference(dateSent).inMinutes;
+      if (DateTime.now().difference(dateSent).inMinutes <= 60) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   Future<List<Operation>> reloadSMSOperations(List<SmsMessage> smsCollection) async {
@@ -24,20 +44,37 @@ class OperationListProvider {
 
     // Remove duplicate List elements
     Set<Operation> set = new Set<Operation>();
-    set.addAll(operations.where((o) => o.isSaldoReal));   // Agregar 1ro las operaciones con saldo real y fecha-hora
-    set.addAll(operations.where((o) => !o.isSaldoReal));  // Agregar el resto sin sobreescribir las que ya estaban en la lista
+    set.addAll(operations.where((o) => o
+        .isSaldoReal)); // Agregar 1ro las operaciones con saldo real y fecha-hora
+    set.addAll(operations
+        .where((o) => !o.isSaldoReal)
+        .toList()
+        .reversed); // Agregar el resto sin sobreescribir las que ya estaban en la lista
+
     List<Operation> operationsNonDuplicated = new List<Operation>.from(set);
 
     // Order List elements
-    List<Operation> operationsSorted = operationsNonDuplicated..sort((a, b) => b.fecha.compareTo(a.fecha));
+    List<Operation> operationsSorted = operationsNonDuplicated
+      ..sort((a, b) => b.fecha.compareTo(a.fecha));
 
     // Agregar los saldos restantes a las operaciones
-    List<Operation> operationsWithSaldo = addSaldoToOperationsXMon(operationsSorted, MONEDA.CUP);
-    operationsWithSaldo = addSaldoToOperationsXMon(operationsWithSaldo, MONEDA.CUC);
+    List<Operation> operationsWithSaldo =
+        addSaldoToOperationsXMon(operationsSorted, MONEDA.CUP);
+    operationsWithSaldo =
+        addSaldoToOperationsXMon(operationsWithSaldo, MONEDA.CUC);
+
+    if (operationsWithSaldo.any((p) => p.moneda == MONEDA.CUP)) {
+      this.saldoCUP =
+          operationsWithSaldo.firstWhere((o) => o.moneda == MONEDA.CUP).saldo;
+    }
+    if (operationsWithSaldo.any((p) => p.moneda == MONEDA.CUC)) {
+      this.saldoCUC =
+          operationsWithSaldo.firstWhere((o) => o.moneda == MONEDA.CUC).saldo;
+    }
 
     // Eliminar las operaciones de Consulta de Saldo
-    operationsWithSaldo.removeWhere((op) =>
-    op.tipoOperacion == TipoOperacion.DEFAULT);
+    operationsWithSaldo
+        .removeWhere((op) => op.tipoOperacion == TipoOperacion.DEFAULT);
 
 //    return operationsSorted;
     return operationsWithSaldo;
@@ -47,12 +84,12 @@ class OperationListProvider {
     return getTipoSms(message) == TipoSms.CONSULTAR_SALDO;
   }
 
-  static List<Operation> smsToOperations(SmsMessage message,
-      int idOperationSaldo) {
+  static List<Operation> smsToOperations(SmsMessage message, int idOperationSaldo) {
     TipoSms tipoSms = getTipoSms(message);
     List<Operation> list = new List<Operation>();
 
     var lines = message.body.split("\n");
+    DateTime smsDate = message.date;
 
     if (tipoSms == TipoSms.ULTIMAS_OPERACIONES) {
       for (int i = 2; i < lines.length - 1; i++) {
@@ -68,9 +105,13 @@ class OperationListProvider {
         DateTime date = new DateTime(int.parse(parts.elementAt(2)),
             int.parse(parts.elementAt(1)), int.parse(parts.elementAt(0)));
 
+        if (date.isAfter(smsDate)) {
+          date = smsDate;
+        }
+
         operation.idOperacion = (items[5].trim()).split(" ")[0].trim();
         operation.fecha = date;
-        operation.tipoOperacion = getTipoOperacion(items[1].trim());
+        operation.tipoOperacion = getTipoOperacion(items[1].trim() + ' ' + items[5].trim().split(" ")[0].trim());
         operation.naturaleza = getNaturalezaOperacion(items[2].trim());
         operation.moneda = getMoneda(items[4].trim());
         operation.importe = double.parse(items[3].trim());
@@ -88,11 +129,14 @@ class OperationListProvider {
     } else if (tipoSms == TipoSms.FACTURA_PAGADA ||
         tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO ||
         tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
+
       Operation operation = new Operation();
       operation.fecha = message.date;
 
       if (tipoSms == TipoSms.FACTURA_PAGADA) {
         operation.idOperacion = lines[3].trim().split(" ")[2].trim();
+        operation.observaciones =
+            "Factura: " + lines[1].trim().split(": ")[1].trim();
         operation.tipoOperacion = getTipoOperacion(lines[0]);
         operation.naturaleza = NaturalezaOperacion.DEBITO;
         operation.moneda = getMoneda(lines[2].trim().split(" ")[3].trim());
@@ -101,12 +145,15 @@ class OperationListProvider {
         operation.isSaldoReal = true;
       } else if (tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO) {
         operation.idOperacion = lines[0].trim().split(" ")[14].trim();
+        operation.observaciones = "Cuenta: " +
+            lines[0].trim().split("cuenta")[1].trim().split(" ")[0].trim();
         operation.tipoOperacion = TipoOperacion.TRANSFERENCIA;
         operation.naturaleza = NaturalezaOperacion.CREDITO;
         operation.moneda = getMoneda(lines[0].trim().split(" ")[11].trim());
         operation.importe = double.parse(lines[0].trim().split(" ")[10].trim());
       } else if (tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
         operation.idOperacion = lines[5].trim().split(" ")[2].trim();
+        operation.observaciones = lines[1].trim();
         operation.tipoOperacion = TipoOperacion.TRANSFERENCIA;
         operation.naturaleza = NaturalezaOperacion.DEBITO;
         operation.moneda = getMoneda(lines[3].trim().split(" ")[2].trim());
@@ -119,7 +166,8 @@ class OperationListProvider {
     return list;
   }
 
-  static List<Operation> addSaldoToOperationsXMon(List<Operation> operationsSorted, MONEDA moneda) {
+  static List<Operation> addSaldoToOperationsXMon(
+      List<Operation> operationsSorted, MONEDA moneda) {
     double firstSaldo = 0.0;
     for (final f in operationsSorted.where((o) => o.moneda == moneda)) {
       if (f.isSaldoReal) {
@@ -132,11 +180,12 @@ class OperationListProvider {
     }
     double previousSaldo = 0.0;
     if (operationsSorted.length > 0) {
-      operationsSorted.where((o)=>o.moneda == moneda).first.saldo = firstSaldo;
+      operationsSorted.where((o) => o.moneda == moneda).first.saldo =
+          firstSaldo;
       previousSaldo = firstSaldo;
     }
     double previousImporte = 0.0;
-    operationsSorted.where((o)=>o.moneda == moneda).forEach((f) {
+    operationsSorted.where((o) => o.moneda == moneda).forEach((f) {
       if (!f.isSaldoReal) {
         f.naturaleza == NaturalezaOperacion.CREDITO
             ? f.saldo = previousSaldo - previousImporte
@@ -145,7 +194,7 @@ class OperationListProvider {
       previousImporte = f.importe;
       previousSaldo = f.saldo;
     });
-    
+
     return operationsSorted;
   }
 
@@ -178,11 +227,9 @@ class OperationListProvider {
       return TipoSms.ERROR_AUTENTICACION;
     else if (message.body.contains("Error "))
       return TipoSms.ERROR;
-    else if (message.body.contains(
-        "Fallo la consulta de servicio. Para realizar esta operacion"))
+    else if (message.body.contains("Fallo la consulta de servicio. Para realizar esta operacion"))
       return TipoSms.ERROR_SERVICIO_SIN_AUTENTICACION;
-    else if (message.body
-        .contains("Fallo la consulta de las ultimas operaciones"))
+    else if (message.body.contains("Fallo la consulta de las ultimas operaciones"))
       return TipoSms.ERROR_ULTIMAS_OPERACIONES;
     else if (message.body.contains("Banco Metropolitano Ultimas operaciones"))
       return TipoSms.ULTIMAS_OPERACIONES;
@@ -190,28 +237,46 @@ class OperationListProvider {
       return TipoSms.DEFAULT;
   }
 
+  TipoSms publicGetTipoSms(SmsMessage message) {
+    return getTipoSms(message);
+  }
+
+  bool isOperationsReload(SmsMessage message){
+    TipoSms tipoSms = getTipoSms(message);
+
+    return (tipoSms == TipoSms.CONSULTAR_SALDO
+        || tipoSms == TipoSms.ULTIMAS_OPERACIONES
+        || tipoSms == TipoSms.FACTURA_PAGADA
+        || tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO
+        || tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO);
+  }
+
   static TipoOperacion getTipoOperacion(String cadena) {
+    String idOperacion = cadena.split(" ")[0];
+    String idTransaccion = cadena.split(" ")[1].substring(0,2);
+    
     TipoOperacion tipoServicio = TipoOperacion.DEFAULT;
     if (cadena != null) {
-      if (cadena.contains("AY"))
+      if (idOperacion == "AY")
         tipoServicio = TipoOperacion.ATM;
-      else if (cadena.contains("TELF"))
+      else if (idOperacion == "TELF" || cadena.contains("telef"))
         tipoServicio = TipoOperacion.TELEFONO;
-      else if (cadena.contains("TELF") || cadena.contains("telef"))
-        tipoServicio = TipoOperacion.TELEFONO;
-      else if (cadena.contains("ELEC") || cadena.contains("electricidad"))
+      else if (idOperacion == "ELECT" || cadena.contains("electricidad"))
         tipoServicio = TipoOperacion.ELECTRICIDAD;
-      else if (cadena.contains("MULT") || cadena.contains("YY"))
-        tipoServicio = TipoOperacion.MULTA;
-      else if (cadena.contains("UU"))
+      else if (idOperacion == "UU")
         tipoServicio = TipoOperacion.AJUSTE;
-      else if (cadena.contains("TRAN"))
+      else if (idOperacion == "YY" && idTransaccion == "YY")    // TRANSFERENCIA ATM
         tipoServicio = TipoOperacion.TRANSFERENCIA;
-      else if (cadena.contains("EV"))
+      else if (idOperacion == "TRAN" && idTransaccion == "MM")  // TRANSFERENCIA MOVIL
+        tipoServicio = TipoOperacion.TRANSFERENCIA;
+      else if (idOperacion == "MULT" && idTransaccion == "YY")
+        tipoServicio = TipoOperacion.MULTA;
+      else if (idOperacion == "EV")
         tipoServicio = TipoOperacion.SALARIO;
-      else if (cadena.contains("IO"))
+      else if (idOperacion == "IO")
         tipoServicio = TipoOperacion.INTERES;
-      else if (cadena.contains("AP")) tipoServicio = TipoOperacion.POS;
+      else if (idOperacion == "AP")
+        tipoServicio = TipoOperacion.POS;
     }
     return tipoServicio;
   }
@@ -244,9 +309,10 @@ class OperationListProvider {
     int year = operations.first.fecha.year;
     List<Operation> listOperations = new List<Operation>();
 
-    operations.forEach((Operation operation){
-      if(operation.fecha.year != year || operation.fecha.month != month){
-        ResumeMonth resumenDelMes = generateResumeOperationsXMonth(listOperations);
+    operations.forEach((Operation operation) {
+      if (operation.fecha.year != year || operation.fecha.month != month) {
+        ResumeMonth resumenDelMes =
+            generateResumeOperationsXMonth(listOperations);
         list.add(resumenDelMes);
 
         listOperations.clear();
@@ -263,14 +329,15 @@ class OperationListProvider {
     return list;
   }
 
-  static ResumeMonth generateResumeOperationsXMonth(List<Operation> listOperations) {
-
+  static ResumeMonth generateResumeOperationsXMonth(
+      List<Operation> listOperations) {
     Set<TipoOperacion> set = new Set<TipoOperacion>();
     listOperations.forEach((Operation operation) {
       set.add(operation.tipoOperacion);
     });
 
-    List<TipoOperacion> typeOperationsNonDuplicated = new List<TipoOperacion>.from(set);
+    List<TipoOperacion> typeOperationsNonDuplicated =
+        new List<TipoOperacion>.from(set);
     List<TipoOperacion> typeOperationsSorted = typeOperationsNonDuplicated
       ..sort((a, b) => getOperationTitle(a).compareTo(getOperationTitle(b)));
 
@@ -287,17 +354,19 @@ class OperationListProvider {
       double resumenTipOpDb = 0.0;
       double resumenTipOpCr = 0.0;
 
-      listOperations.where((o)=>o.tipoOperacion == tipoOp).forEach((f) {
+      listOperations.where((o) => o.tipoOperacion == tipoOp).forEach((f) {
         f.naturaleza == NaturalezaOperacion.DEBITO
             ? resumenTipOpDb += f.importe
             : resumenTipOpCr += f.importe;
       });
 
-      ResumeTypeOperation typeOperation = new ResumeTypeOperation(tipoOp, resumenTipOpCr, resumenTipOpDb);
+      ResumeTypeOperation typeOperation =
+          new ResumeTypeOperation(tipoOp, resumenTipOpCr, resumenTipOpDb);
       listTypes.add(typeOperation);
     });
 
-    ResumeMonth resumeMonth = new ResumeMonth(listOperations.first.fecha, resumenCr, resumenDb, listTypes);
+    ResumeMonth resumeMonth = new ResumeMonth(
+        listOperations.first.fecha, resumenCr, resumenDb, listTypes);
     return resumeMonth;
   }
 }
