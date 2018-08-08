@@ -58,10 +58,8 @@ class OperationListProvider {
       ..sort((a, b) => b.fecha.compareTo(a.fecha));
 
     // Agregar los saldos restantes a las operaciones
-    List<Operation> operationsWithSaldo =
-        addSaldoToOperationsXMon(operationsSorted, MONEDA.CUP);
-    operationsWithSaldo =
-        addSaldoToOperationsXMon(operationsWithSaldo, MONEDA.CUC);
+    List<Operation> operationsWithSaldo = addSaldoToOperationsXMon(operationsSorted, MONEDA.CUP);
+    operationsWithSaldo = addSaldoToOperationsXMon(operationsWithSaldo, MONEDA.CUC);
 
     if (operationsWithSaldo.any((p) => p.moneda == MONEDA.CUP)) {
       this.saldoCUP =
@@ -195,6 +193,41 @@ class OperationListProvider {
       previousSaldo = f.saldo;
     });
 
+    // BEGIN - Agregando operaciones de ajuste
+    var first = true;
+    Operation previousOperation = new Operation();
+    List<Operation> operationsFinal = new List<Operation>();
+    int idFix = 1;
+    for(Operation f in operationsSorted.where((o) => o.moneda == moneda)){
+      if(first) {
+        previousOperation = f;
+        first = false;
+        operationsFinal.add(f);
+        continue;
+      }
+      var negativo = f.naturaleza == NaturalezaOperacion.CREDITO;
+      if(double.parse((previousOperation.saldo + (negativo ? -previousOperation.importe : previousOperation.importe)).toStringAsFixed(2)) == f.saldo){
+        operationsFinal.add(f);
+      }
+      else{
+        // Agregar operacion de ajuste
+        var fixOperation = new Operation();
+        fixOperation.saldo = previousOperation.saldo - (negativo ? previousOperation.importe : -previousOperation.importe);
+        fixOperation.importe = previousOperation.saldo - (negativo ? -f.saldo : f.saldo);
+        fixOperation.naturaleza = (negativo ? NaturalezaOperacion.DEBITO : NaturalezaOperacion.CREDITO);
+        fixOperation.tipoOperacion = TipoOperacion.MISSING;
+        fixOperation.moneda = moneda;
+        fixOperation.isSaldoReal = false;
+        fixOperation.fecha = previousOperation.fecha;
+        fixOperation.idOperacion = "FIX" + (idFix++).toString();
+        operationsFinal.add(fixOperation);
+        operationsFinal.add(f);
+      }
+      previousOperation = f;
+    }
+    // END - Agregando operaciones de ajuste
+
+//    return operationsFinal;
     return operationsSorted;
   }
 

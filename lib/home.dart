@@ -33,7 +33,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  ScrollController _hideButtonController;
+  ScrollController _hideButtonController = new ScrollController();
 
   List<Operation> _operacionesCUP = new List<Operation>();
   List<Operation> _operacionesCUC = new List<Operation>();
@@ -54,7 +54,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
 
-    _hideButtonController = new ScrollController();
     new Timer(const Duration(seconds: 3), () {
       requestPermissions([PermissionName.CallPhone,PermissionName.ReceiveSms,PermissionName.ReadSms]);
     });
@@ -66,18 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     // Scroll Listener
-    _hideButtonController.addListener((){
-      if(_hideButtonController.position.userScrollDirection == ScrollDirection.reverse){
-        setState((){
-          _isFABButtonVisible = false;
-        });
-      }
-      if(_hideButtonController.position.userScrollDirection == ScrollDirection.forward){
-        setState((){
-          _isFABButtonVisible = true;
-        });
-      }
-    });
+    _initScrollListener();
   }
 
   Future<PermissionStatus> getPermission(PermissionName permissionName) async {
@@ -86,9 +74,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   requestPermissions(List<PermissionName> permissionList) async {
-    setState(() {
-      _loading = true;
-    });
+    if(!_loading){
+      setState(() {
+        _loading = true;
+      });
+    }
     print("Solicitar Permisos + loading...");
 
     List<Permissions> resultValues = await Permission.requestPermissions(permissionList);
@@ -117,14 +107,15 @@ class _MyHomePageState extends State<MyHomePage> {
             _loading = false;
           });
         }
+        if(_loading && resultValues.length == 1){
+          setState(() {
+            _loading = false;
+          });
+        }
       }
 
       if (resultValues.any((p) =>
       p.permissionName == PermissionName.CallPhone)) {
-        setState(() {
-          _loading = false;
-        });
-
         if (resultValues
             .firstWhere((rv) => rv.permissionName == PermissionName.CallPhone)
             .permissionStatus == PermissionStatus.allow) {
@@ -135,6 +126,11 @@ class _MyHomePageState extends State<MyHomePage> {
         else {
           setState(() {
             _canCall = false;
+          });
+        }
+        if(_loading && resultValues.length == 1){
+          setState(() {
+            _loading = false;
           });
         }
       }
@@ -172,11 +168,12 @@ class _MyHomePageState extends State<MyHomePage> {
           if (smsType != TipoSms.ULTIMAS_OPERACIONES){
             _showSMSModal(msg);
           }
-          setState(() {
-            _loading = true;
-          });
 
           if(_opListProvider.isOperationsReload(msg)) {
+            setState(() {
+              _loading = true;
+            });
+
             new Timer(const Duration(seconds: 3), () {
               _operacionesCUC = new List<Operation>();
               _operacionesCUP = new List<Operation>();
@@ -184,18 +181,32 @@ class _MyHomePageState extends State<MyHomePage> {
               _resumenOperacionesCUP = new List<ResumeMonth>();
 
               requestPermissions([PermissionName.ReadSms]);
-            });
-          }
-          if(_loading){
-            setState(() {
-              _loading = false;
+              new Timer(const Duration(seconds: 5), () {
+                if(_loading){
+                  setState(() {
+                    _loading = false;
+                  });
+                }
+              });
             });
           }
         }
       }
-      setState(() {
-        _loading = false;
-      });
+    });
+  }
+
+  void _initScrollListener(){
+    _hideButtonController.addListener((){
+      if(_hideButtonController.position.userScrollDirection == ScrollDirection.reverse){
+        setState((){
+          _isFABButtonVisible = false;
+        });
+      }
+      if(_hideButtonController.position.userScrollDirection == ScrollDirection.forward){
+        setState((){
+          _isFABButtonVisible = true;
+        });
+      }
     });
   }
 
