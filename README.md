@@ -20,13 +20,20 @@ Special thanks to:
 - [ ] Add snapshots to readme.md
 - [ ] Graph with account balance
 - [x] Support for 2 accounts (CUP & CUC)
-- [ ] Improve Transactions Details
-- [ ] Allow receive sms and auto-update transaction list
+- [x] Improve Transactions Details
+- [x] Allow receive sms and auto-update transaction list
+- [x] Sticky Headers on transaction List Months
 - [ ] Improve connect/disconnect button based on sms messages history
 - [ ] Save/Load transaction data from database therefore sms messages
 - [ ] Support another types of Bank Accounts (BANDEC,BPA)
 - [ ] Allow export Transactions to excel
-- [ ] Improve Dashboard view
+- [x] Improve Dashboard view
+- [ ] Change apk icon
+- [ ] Set a Splash Screen
+- [ ] Save app settings
+- [ ] Show alert after tap back to exit app
+- [x] Manage Empty Lists (CUP, CUC or both)
+
 
 ## Bugs
 
