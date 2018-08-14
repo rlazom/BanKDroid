@@ -136,7 +136,7 @@ packages:
       name: intl
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.15.6"
+    version: "0.15.7"
   io:
     dependency: transitive
     description:
@@ -221,13 +221,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.5.1"
-  path_provider:
-    dependency: "direct main"
-    description:
-      name: path_provider
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.4.1"
   permission:
     dependency: "direct main"
     description:
@@ -263,6 +256,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.29.0+1"
+  shared_preferences:
+    dependency: "direct main"
+    description:
+      name: shared_preferences
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.4.2"
   shelf:
     dependency: transitive
     description:
@@ -302,7 +302,7 @@ packages:
       name: sms
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.1.4"
+    version: "0.1.6"
   source_map_stack_trace:
     dependency: transitive
     description:
@@ -331,6 +331,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.9.2"
+  sticky_header_list:
+    dependency: "direct main"
+    description:
+      name: sticky_header_list
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.0.5"
   stream_channel:
     dependency: transitive
     description:

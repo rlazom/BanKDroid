@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
+
 import 'operation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -29,7 +33,7 @@ class OperationListItem extends StatelessWidget {
   Widget build(BuildContext context) {
 
     List<Widget> listModalContentElements = new List<Widget>();
-    getModalContentList(listModalContentElements);
+    getModalContentList(listModalContentElements, context);
 
     return Column(
       children: [
@@ -98,7 +102,7 @@ class OperationListItem extends StatelessWidget {
     );
   }
 
-  void getModalContentList(List<Widget> listModalContentElements) {
+  void getModalContentList(List<Widget> listModalContentElements, BuildContext context) {
     // Adding IconDate, Date and Time
     listModalContentElements.add(new Wrap(
       direction: Axis.horizontal,
@@ -120,14 +124,21 @@ class OperationListItem extends StatelessWidget {
     listModalContentElements.add(new Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        new Text("Importe:"),
+        new Text("Saldo Restante:"),
+      ],
+    ));
+    listModalContentElements.add(new Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
         Row(
           children: [
-            new Icon(
-              Icons.attach_money,
-              color: Colors.black54,
-            ),
+//            new Icon(
+//              Icons.attach_money,
+//              color: Colors.black54,
+//            ),
             new Text(importe.toStringAsFixed(2)),
-            new Text(getMonedaStr(moneda)),
+            new Text(getMonedaStr(moneda),style: TextStyle(fontWeight: FontWeight.bold),),
           ],
         ),
         Row(
@@ -142,6 +153,7 @@ class OperationListItem extends StatelessWidget {
               getMonedaStr(moneda),
               style: TextStyle(
                 color: isSaldoReal ? Colors.black : Colors.black38,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -152,16 +164,29 @@ class OperationListItem extends StatelessWidget {
     // Adding Observations (if needed)
     if (obs.length > 0) {
       listModalContentElements.add(new Text(''));
-      listModalContentElements.add(new Wrap(
-        direction: Axis.horizontal,
-        children: [
-          new Icon(
-            Icons.message,
-            color: Colors.black54,
-          ),
-          new Text(obs),
-        ],
-      ));
+
+      String obsTitle = obs.split(" ")[0];
+      String obsContent = obs.split(": ")[1];
+
+      listModalContentElements.add(new Text(obsTitle));
+      listModalContentElements.add(
+          new ActionChip(
+            avatar: new CircleAvatar(
+              backgroundColor: Colors.grey.shade800,
+              child: new Icon(
+                Icons.message,size: 18.0, color: Colors.white70,
+              ),
+            ),
+            label: new Text(obsContent),
+            onPressed: () {
+              Clipboard.setData(new ClipboardData(text: obsContent));
+              Scaffold.of(context).showSnackBar(new SnackBar(content: new Text("Copiado al portapapeles $obsContent"),));
+              new Timer(const Duration(seconds: 3), () {
+                Scaffold.of(context).hideCurrentSnackBar();
+              });
+            },
+          )
+      );
     }
   }
 }

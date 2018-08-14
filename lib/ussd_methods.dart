@@ -1,13 +1,18 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:call_number/call_number.dart';
 
 callConectarse() {
   _initCall("*444*40*03%23");
-  print("Ultimas Operaciones");
+  print("Conectando...");
 }
 
-callDesconectarse() {
+callDesconectarse(SharedPreferences prefs) {
   _initCall("*444*70%23");
-  print("Ultimas Operaciones");
+  prefs.setBool('closed_session', true);
+  print("Desconectado");
 }
 
 callSaldo() {

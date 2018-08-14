@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:call_number/call_number.dart';
-import 'package:permission/permission.dart';
 import 'package:flutter/material.dart';
 
 class MenuAppBar extends StatelessWidget {

@@ -36,10 +36,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
   @override
   Widget build(BuildContext context) {
     List<Widget> dashboardWidgets = new List<Widget>();
-    int cantLists =
-        (widget.saldoCUP != null ? 1 : 0) + (widget.saldoCUC != null ? 1 : 0);
+    int cantLists = (widget.saldoCUP != null ? 1 : 0) + (widget.saldoCUC != null ? 1 : 0);
 
-    if (widget.lastOperationCUP != null || widget.lastOperationCUC != null) {
+    if (widget.lastOperationCUP != null || widget.lastOperationCUC != null || cantLists != 0) {
       dashboardWidgets.add(SaldoActual(
         saldo: isCurrencyCUP ? widget.saldoCUP : widget.saldoCUC,
         impLastOp: isCurrencyCUP

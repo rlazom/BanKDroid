@@ -1,7 +1,6 @@
-
-
 // Modelo
 import 'package:flutter/rendering.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'resumen.dart';
 import 'operation.dart';
@@ -33,6 +32,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  SharedPreferences prefs;
   ScrollController _hideButtonController = new ScrollController();
 
   List<Operation> _operacionesCUP = new List<Operation>();
@@ -53,6 +53,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+
+    _loadSharedPreferences();
 
     new Timer(const Duration(seconds: 3), () {
       requestPermissions([PermissionName.CallPhone,PermissionName.ReceiveSms,PermissionName.ReadSms]);
@@ -148,6 +150,10 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
+  Future _loadSharedPreferences()async {
+    prefs = await SharedPreferences.getInstance();
+  }
+
   void _initSMSListener(){
     SmsReceiver receiver = new SmsReceiver();
     receiver.onSmsReceived.listen((SmsMessage msg) {
@@ -156,6 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
         if (smsType == TipoSms.AUTENTICAR) {
           _showSMSModal(msg);
+          prefs.remove('closed_session');
           setState(() {
             _conected = true;
           });
@@ -232,7 +239,7 @@ class _MyHomePageState extends State<MyHomePage> {
     print("Saldo CUC: " + _opListProvider.saldoCUC.toString());
 
     if(_conected == false) {
-      if (_opListProvider.isAlreadyConected(listSMS)) {
+      if (_opListProvider.isAlreadyConected(listSMS, prefs)) {
         setState(() {
           _conected = true;
         });
@@ -275,9 +282,12 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
 
     // Llenar Tabs
-    List<Widget> tabsHeader = new List<Widget>();
-    List<Widget> tabsContent = new List<Widget>();
-    getContent(tabsHeader, tabsContent);
+//    List<Widget> tabsHeader = new List<Widget>();
+//    List<Widget> tabsContent = new List<Widget>();
+//    getContent(tabsHeader, tabsContent);
+
+    List<Widget> tabsHeader = getTabsHeaders();
+    List<Widget> tabsContent = getTabsContents();
 
     return new DefaultTabController(
       length: 3,
@@ -336,7 +346,7 @@ class _MyHomePageState extends State<MyHomePage> {
   _toggleConect() {
     if (_conected) {
       //desconectarse
-      callDesconectarse();
+      callDesconectarse(prefs);
       setState(() {
         _conected = false;
       });
@@ -354,10 +364,6 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     }
   }
-
-//  _initCall(String number) async {
-//    if (number != null) await new CallNumber().callNumber(number);
-//  }
 
   void getContent(List<Widget> tabsHeader, List<Widget> tabsContent) {
     // TAB RESUMEN
@@ -388,5 +394,51 @@ class _MyHomePageState extends State<MyHomePage> {
         hideButtonController: _hideButtonController,
       ));
     }
+  }
+  List<Widget> getTabsHeaders() {
+    List<Widget> tempListHeaders = new List<Widget>();
+
+    // TAB RESUMEN
+    tempListHeaders.add(new Tab(icon: new Icon(Icons.home),));
+
+    // TAB CUP / CUC
+    if(_operacionesCUP.isNotEmpty){
+      tempListHeaders.add(new Tab(text: 'CUP',));
+    }
+    if(_operacionesCUC.isNotEmpty){
+      tempListHeaders.add(new Tab(text: 'CUC',));
+    }
+
+    return tempListHeaders;
+  }
+  List<Widget> getTabsContents() {
+    List<Widget> tempListContents = new List<Widget>();
+
+    // TAB RESUMEN
+    tempListContents.add(HomeDashboard(
+      conected: _conected,
+      saldoCUP: _opListProvider.saldoCUP,
+      saldoCUC: _opListProvider.saldoCUC,
+      lastOperationCUP: _operacionesCUP.isNotEmpty ? _operacionesCUP[0] : null,
+      lastOperationCUC: _operacionesCUC.isNotEmpty ? _operacionesCUC[0] : null,
+      resumeOperationsCUP: _resumenOperacionesCUP,
+      resumeOperationsCUC: _resumenOperacionesCUC,
+      hideButtonController: _hideButtonController,
+    ));
+
+    // TAB CUP / CUC
+    if(_operacionesCUP.isNotEmpty){
+      tempListContents.add(OperationList(
+        operaciones: _operacionesCUP,
+        hideButtonController: _hideButtonController,
+      ));
+    }
+    if(_operacionesCUC.isNotEmpty){
+      tempListContents.add(OperationList(
+        operaciones: _operacionesCUC,
+        hideButtonController: _hideButtonController,
+      ));
+    }
+    return tempListContents;
   }
 }

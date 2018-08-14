@@ -1,3 +1,5 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'resumen.dart';
 import 'operation.dart';
 
@@ -13,7 +15,7 @@ class OperationListProvider {
     return await query.querySms(address: "PAGOxMOVIL");
   }
 
-  bool isAlreadyConected(List<SmsMessage> smsCollection) {
+  bool isAlreadyConected(List<SmsMessage> smsCollection, SharedPreferences prefs) {
     if (smsCollection.any((sms) => sms.body.contains("autenticado"))) {
       smsCollection = smsCollection
         ..sort((a, b) => b.dateSent.compareTo(a.dateSent));
@@ -22,7 +24,9 @@ class OperationListProvider {
           .dateSent;
 
       int diff = DateTime.now().difference(dateSent).inMinutes;
-      if (DateTime.now().difference(dateSent).inMinutes <= 60) {
+      bool _sessionClosed = prefs.getBool('closed_session') ?? false;
+
+      if(diff <= 60 && !_sessionClosed){
         return true;
       }
     }
@@ -164,8 +168,7 @@ class OperationListProvider {
     return list;
   }
 
-  static List<Operation> addSaldoToOperationsXMon(
-      List<Operation> operationsSorted, MONEDA moneda) {
+  static List<Operation> addSaldoToOperationsXMon(List<Operation> operationsSorted, MONEDA moneda) {
     double firstSaldo = 0.0;
     for (final f in operationsSorted.where((o) => o.moneda == moneda)) {
       if (f.isSaldoReal) {
@@ -177,9 +180,8 @@ class OperationListProvider {
           : firstSaldo -= f.importe;
     }
     double previousSaldo = 0.0;
-    if (operationsSorted.length > 0) {
-      operationsSorted.where((o) => o.moneda == moneda).first.saldo =
-          firstSaldo;
+    if (operationsSorted.length > 0 && operationsSorted.any((p) => p.moneda == moneda)) {
+      operationsSorted.where((o) => o.moneda == moneda).first.saldo = firstSaldo;
       previousSaldo = firstSaldo;
     }
     double previousImporte = 0.0;
@@ -193,7 +195,8 @@ class OperationListProvider {
       previousSaldo = f.saldo;
     });
 
-    // BEGIN - Agregando operaciones de ajuste
+    // TODO: Arreglar funcion de agregar operaciones de ajuste
+    // BEGIN - Agregando operaciones de ajuste - CON ERROR
     var first = true;
     Operation previousOperation = new Operation();
     List<Operation> operationsFinal = new List<Operation>();
@@ -225,7 +228,7 @@ class OperationListProvider {
       }
       previousOperation = f;
     }
-    // END - Agregando operaciones de ajuste
+    // END - Agregando operaciones de ajuste - CON ERROR
 
 //    return operationsFinal;
     return operationsSorted;
@@ -362,8 +365,7 @@ class OperationListProvider {
     return list;
   }
 
-  static ResumeMonth generateResumeOperationsXMonth(
-      List<Operation> listOperations) {
+  static ResumeMonth generateResumeOperationsXMonth(List<Operation> listOperations) {
     Set<TipoOperacion> set = new Set<TipoOperacion>();
     listOperations.forEach((Operation operation) {
       set.add(operation.tipoOperacion);
