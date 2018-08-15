@@ -76,7 +76,8 @@ class OperationListProvider {
 
     // Eliminar las operaciones de Consulta de Saldo
     operationsWithSaldo
-        .removeWhere((op) => op.tipoOperacion == TipoOperacion.DEFAULT);
+        .removeWhere((op) => op.tipoOperacion == TipoOperacion.SALDO);
+//        .removeWhere((op) => op.tipoOperacion == TipoOperacion.DEFAULT);
 
 //    return operationsSorted;
     return operationsWithSaldo;
@@ -123,6 +124,7 @@ class OperationListProvider {
     } else if (tipoSms == TipoSms.CONSULTAR_SALDO) {
       Operation operation = new Operation();
       operation.idOperacion = idOperationSaldo.toString();
+      operation.tipoOperacion = TipoOperacion.SALDO;
       operation.fecha = message.date;
       operation.moneda = getMoneda(lines[2].trim().split(" ")[4].trim());
       operation.saldo = double.parse(lines[1].trim().split(" ")[3].trim());
@@ -309,6 +311,8 @@ class OperationListProvider {
         tipoServicio = TipoOperacion.MULTA;
       else if (idOperacion == "EV")
         tipoServicio = TipoOperacion.SALARIO;
+      else if (idOperacion == "EB")
+        tipoServicio = TipoOperacion.JUBILACION;
       else if (idOperacion == "IO")
         tipoServicio = TipoOperacion.INTERES;
       else if (idOperacion == "AP")
