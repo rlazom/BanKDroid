@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:sticky_header_list/sticky_header_list.dart';
 
@@ -10,35 +11,35 @@ const Color monthTileBackground = Colors.white;
 class OperationList extends StatelessWidget {
   final List<Operation> operaciones;
   final ScrollController hideButtonController;
+//  final TextEditingController filterCtrl;
+//  final String filter;
 
   const OperationList({
     this.operaciones,
     this.hideButtonController,
+//    this.filterCtrl,
+//    this.filter,
   });
-
-  /*
-  bool _scrollingStarted(UserScrollNotification usn) {
-    print('Wheeeeeeee!');
-
-    if(usn.direction == ScrollDirection.reverse){
-//      setState((){
-        _isFABButtonVisible = false;
-//      });
-    }
-    if(_hideButtonController.position.userScrollDirection == ScrollDirection.forward){
-//      setState((){
-        _isFABButtonVisible = true;
-//      });
-    }
-
-    return false;
-  }
-  */
 
   @override
   Widget build(BuildContext context) {
-    List<StickyListRow> myStickyList = new List<StickyListRow>();
-    generateStickyContentList(myStickyList);
+
+    if(operaciones.isEmpty){
+      return new Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            new Icon(Icons.speaker_notes_off,color: Colors.grey,size: 40.0,),
+            new Text(
+              'Sin coincidencias',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    List<StickyListRow> myStickyList = generateStickyContentList();
 
     return new Scrollbar(
       child: new StickyList(
@@ -47,7 +48,8 @@ class OperationList extends StatelessWidget {
     );
   }
 
-  void generateStickyContentList(List<StickyListRow> stickyList) {
+  List<StickyListRow> generateStickyContentList() {
+    List<StickyListRow> stickyList = new List<StickyListRow>();
     DateTime dateAnterior = operaciones.first.fecha;
 
     stickyList.add(
@@ -83,6 +85,8 @@ class OperationList extends StatelessWidget {
         )),
       );
     });
+
+    return stickyList;
   }
 }
 

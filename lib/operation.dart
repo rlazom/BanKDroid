@@ -58,7 +58,9 @@ enum TipoSms{
 
 enum TipoOperacion{
   SALARIO,
+  JUBILACION,
   INTERES,
+  SALDO,
   ATM,
   TRANSFERENCIA,
   ELECTRICIDAD,
@@ -84,6 +86,7 @@ enum MONEDA{
 
 IconData getIconData(TipoOperacion tipoOperacion) {
   return tipoOperacion == TipoOperacion.ATM ? Icons.local_atm
+      : tipoOperacion == TipoOperacion.SALDO ? Icons.attach_money
       : tipoOperacion == TipoOperacion.TELEFONO ? Icons.phone
       : tipoOperacion == TipoOperacion.ELECTRICIDAD ? Icons.power
       : tipoOperacion == TipoOperacion.AGUA ? Icons.opacity
@@ -91,6 +94,7 @@ IconData getIconData(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.TRANSFERENCIA ? Icons.compare_arrows
       : tipoOperacion == TipoOperacion.POS ? Icons.shopping_cart
       : tipoOperacion == TipoOperacion.SALARIO ? Icons.work
+      : tipoOperacion == TipoOperacion.JUBILACION ? Icons.work
       : tipoOperacion == TipoOperacion.MULTA ? Icons.assignment
       : tipoOperacion == TipoOperacion.AJUSTE ? Icons.exposure
       : tipoOperacion == TipoOperacion.MISSING ? Icons.broken_image
@@ -103,12 +107,14 @@ Color getIconColor(NaturalezaOperacion naturaleza) {
 
 String getOperationTitle(TipoOperacion tipoOperacion) {
   return tipoOperacion == TipoOperacion.ATM ? "Cajero Automatico"
+      : tipoOperacion == TipoOperacion.SALDO ? "Consulta Saldo"
       : tipoOperacion == TipoOperacion.TELEFONO ? "Factura Telefonica"
       : tipoOperacion == TipoOperacion.ELECTRICIDAD ? "Factura Electrica"
       : tipoOperacion == TipoOperacion.INTERES ? "Intereses"
       : tipoOperacion == TipoOperacion.TRANSFERENCIA ? "Transferencia"
       : tipoOperacion == TipoOperacion.POS ? "POS"
       : tipoOperacion == TipoOperacion.SALARIO ? "Salario"
+      : tipoOperacion == TipoOperacion.JUBILACION ? "Jubilacion"
       : tipoOperacion == TipoOperacion.MULTA ? "Multa"
       : tipoOperacion == TipoOperacion.AJUSTE ? "Ajuste"
       : "Desconocido";
