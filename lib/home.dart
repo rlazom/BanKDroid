@@ -18,6 +18,7 @@ import 'operation_list.dart';
 // External packages
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:intl/intl.dart';
 
 // Plugins
 import 'package:permission/permission.dart';
@@ -31,10 +32,14 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => new _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
   SharedPreferences prefs;
+
   ScrollController _hideButtonController = new ScrollController();
+  ScrollController _stickyScrollController = new ScrollController();
   TextEditingController filterCtrl = new TextEditingController();
+  TabController tabController;
+
   String filter;
 
   List<Operation> _operacionesCUP = new List<Operation>();
@@ -46,7 +51,6 @@ class _MyHomePageState extends State<MyHomePage> {
   List<ResumeMonth> _resumenOperacionesCUC = new List<ResumeMonth>();
 
   bool _isSearch = false;
-  bool _showSearch = false;
 
   bool _conected = false;
   bool _loading = true;
@@ -80,6 +84,17 @@ class _MyHomePageState extends State<MyHomePage> {
     // Listeners
     _initScrollListener();
     _initFilterListener();
+    _initTabControllerListener();
+  }
+
+  @override
+  void dispose() {
+    _stickyScrollController.dispose();
+    _hideButtonController.dispose();
+    filterCtrl.dispose();
+    tabController.dispose();
+
+    super.dispose();
   }
 
   Future<PermissionStatus> getPermission(PermissionName permissionName) async {
@@ -219,25 +234,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _initScrollListener() {
     _hideButtonController.addListener(() {
-      if (_hideButtonController.position.userScrollDirection ==
-          ScrollDirection.reverse) {
+      if (_hideButtonController.position.userScrollDirection == ScrollDirection.reverse) {
         setState(() {
           _isFABButtonVisible = false;
         });
       }
-      if (_hideButtonController.position.userScrollDirection ==
-          ScrollDirection.forward) {
+      if (_hideButtonController.position.userScrollDirection == ScrollDirection.forward) {
         setState(() {
           _isFABButtonVisible = true;
         });
       }
     });
   }
-
   void _initFilterListener() {
     filterCtrl.addListener(() {
       setState(() {
         filter = filterCtrl.text;
+      });
+    });
+  }
+  void _initTabControllerListener() {
+    tabController = new TabController(length: 3, vsync: this);
+    tabController.addListener(() {
+      setState(() {
       });
     });
   }
@@ -276,33 +295,34 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _onReloadSMSOperations(List<Operation> operaciones) {
+    print("Cargar listas CUP y CUC");
     if (!_loading) {
       setState(() {
         _loading = true;
       });
     }
-    print("Cargar listas CUP y CUC");
 
     _operacionesCUP = new List<Operation>();
     _operacionesCUC = new List<Operation>();
+    _filteredCUP = new List<Operation>();
+    _filteredCUC = new List<Operation>();
 
-    setState(() {
-      _operacionesCUP
-          .addAll(operaciones.where((o) => o.moneda == MONEDA.CUP).toList());
+//    setState(() {
+      _operacionesCUP.addAll(operaciones.where((o) => o.moneda == MONEDA.CUP).toList());
       print("OnLoadedCUP_OperationList");
       _resumenOperacionesCUP = _operacionesCUP.isNotEmpty
           ? _opListProvider.getResumenOperaciones(_operacionesCUP)
           : new List<ResumeMonth>();
       print("OnLoadedCUP_resumenOperacionesCUP");
 
-      _operacionesCUC
-          .addAll(operaciones.where((o) => o.moneda == MONEDA.CUC).toList());
+      _operacionesCUC.addAll(operaciones.where((o) => o.moneda == MONEDA.CUC).toList());
       print("OnLoadedCUC_OperationList");
       _resumenOperacionesCUC = _operacionesCUC.isNotEmpty
           ? _opListProvider.getResumenOperaciones(_operacionesCUC)
           : new List<ResumeMonth>();
-      print("OnLoadedCUC_resumenOperacionesCUP");
+      print("OnLoadedCUC_resumenOperacionesCUC");
 
+    setState(() {
       _filteredCUP.addAll(_operacionesCUP);
       _filteredCUC.addAll(_operacionesCUC);
 
@@ -320,9 +340,9 @@ class _MyHomePageState extends State<MyHomePage> {
       length: 3,
       child: new Scaffold(
         appBar: new AppBar(
-          bottom: !_canReadSMS ? null : new TabBar(tabs: tabsHeader),
+          bottom: !_canReadSMS ? null : new TabBar(tabs: tabsHeader, controller: tabController,),
 //          title: new Text(widget.title),
-          title: appBarTitle(
+          title: AppBarTitle(
             title: widget.title,
             filterCtrl: filterCtrl,
             isSearch: _isSearch,
@@ -334,6 +354,12 @@ class _MyHomePageState extends State<MyHomePage> {
 //              icon: Icon(_isSearch ? Icons.close : Icons.search),
 //              onPressed: _toggleSearch,
 //            ),
+            tabController.index != 0
+                ? new IconButton(
+                  icon: Icon(_isSearch ? Icons.close : Icons.search),
+                  onPressed: _toggleSearch,
+                )
+                : new Container(),
             MenuAppBar(
               canCall: _canCall,
               requestPermissions: () {
@@ -370,7 +396,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           )),
                     ],
                   ))
-                : TabBarView(children: tabsContent),
+                : TabBarView(children: tabsContent, controller: tabController,),
         floatingActionButton: !_canReadSMS || !_isFABButtonVisible
             ? null
             : FloatingActionButton(
@@ -438,7 +464,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return tempListHeaders;
   }
-
   List<Widget> getTabsContents() {
     List<Widget> tempListContents = new List<Widget>();
 
@@ -459,14 +484,14 @@ class _MyHomePageState extends State<MyHomePage> {
       tempListContents.add(OperationList(
         operaciones: _filteredCUP,
 //        operaciones: _operacionesCUP,
-        hideButtonController: _hideButtonController,
+        stickyListController: _stickyScrollController,
       ));
     }
     if (_operacionesCUC.isNotEmpty) {
       tempListContents.add(OperationList(
         operaciones: _filteredCUC,
 //        operaciones: _operacionesCUC,
-        hideButtonController: _hideButtonController,
+        stickyListController: _stickyScrollController,
       ));
     }
     return tempListContents;
@@ -488,6 +513,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _searchOperation(String filter) {
+    print('Filtering... ' + filter);
     _filteredCUP.clear();
     _filteredCUC.clear();
 
@@ -497,24 +523,44 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     else{
       setState(() {
-        _filteredCUP.addAll(_operacionesCUP
-            .where((op) => getOperationTitle(op.tipoOperacion).toLowerCase().contains(filter.toLowerCase())).toList());
-
-        _filteredCUC.addAll(_operacionesCUC
-            .where((op) => getOperationTitle(op.tipoOperacion).toLowerCase().contains(filter.toLowerCase())).toList());
+        _stickyScrollController.jumpTo(0.0);
+//        _filteredCUP.addAll(_operacionesCUP
+//            .where((op) => getOperationTitle(op.tipoOperacion).toLowerCase().contains(filter.toLowerCase())).toList());
+//
+//        _filteredCUC.addAll(_operacionesCUC
+//            .where((op) => getOperationTitle(op.tipoOperacion).toLowerCase().contains(filter.toLowerCase())).toList());
+        _filteredCUP.addAll(filterOperations(_operacionesCUP));
+        _filteredCUC.addAll(filterOperations(_operacionesCUC));
       });
     }
+  }
+
+  List<Operation> filterOperations(List<Operation> operaciones){
+    List<Operation> filteredList = new List<Operation>();
+    operaciones.forEach((op){
+      if(getOperationTitle(op.tipoOperacion).toLowerCase().contains(filter.toLowerCase())
+        || new DateFormat('d M yyyy d-M-yyyy d/M/yyyy').format(op.fecha).toString().toLowerCase().contains(filter.toLowerCase())
+        || new DateFormat('d MM yyyy d-MM-yyyy d/MM/yyyy').format(op.fecha).toString().toLowerCase().contains(filter.toLowerCase())
+        || new DateFormat('M MM MMM MMMM yyyy').format(op.fecha).toString().toLowerCase().contains(filter.toLowerCase())
+        || op.importe.toStringAsFixed(2).contains(filter.toLowerCase())
+      ){
+        filteredList.add(op);
+      }
+    });
+    return filteredList.toList();
   }
 }
 
 
-class appBarTitle extends StatelessWidget {
+
+
+class AppBarTitle extends StatelessWidget {
   final bool isSearch;
   final String title;
   final TextEditingController filterCtrl;
   final Function searchOperation;
 
-  const appBarTitle({
+  const AppBarTitle({
     this.isSearch,
     this.title,
     this.filterCtrl,

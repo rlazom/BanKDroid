@@ -10,29 +10,30 @@ const Color monthTileBackground = Colors.white;
 
 class OperationList extends StatelessWidget {
   final List<Operation> operaciones;
-  final ScrollController hideButtonController;
-//  final TextEditingController filterCtrl;
-//  final String filter;
+  final ScrollController stickyListController;
 
   const OperationList({
     this.operaciones,
-    this.hideButtonController,
-//    this.filterCtrl,
-//    this.filter,
+    this.stickyListController,
   });
 
   @override
   Widget build(BuildContext context) {
 
+//    showSearch = true;
+
     if(operaciones.isEmpty){
       return new Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: new ListView(
+          shrinkWrap: true,
+          controller: stickyListController,
           children: <Widget>[
             new Icon(Icons.speaker_notes_off,color: Colors.grey,size: 40.0,),
-            new Text(
-              'Sin coincidencias',
-              style: TextStyle(color: Colors.grey),
+            Center(
+              child: new Text(
+                'Sin coincidencias',
+                style: TextStyle(color: Colors.grey,),
+              ),
             ),
           ],
         ),
@@ -44,6 +45,7 @@ class OperationList extends StatelessWidget {
     return new Scrollbar(
       child: new StickyList(
         children: myStickyList,
+        controller: stickyListController,
       ),
     );
   }
