@@ -46,10 +46,16 @@ class OperationListProvider {
       operations..addAll(operationsSMS);
     });
 
+    operations.where((op) => op.observaciones != "")
+        .where((op) => op.tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO && (op.observaciones.split(" ")[1].substring(0,4) == '9202' || op.observaciones.split(" ")[1].substring(0,4) == '9200'))
+        .forEach((op) {
+          print(op.fecha.toString() + ' ' + op.idOperacion + ' ' + op.tipoSms.toString() + ' ' + op.observaciones + ' ' + op.moneda.toString() + ' ' + op.importe.toString());
+          op.importe = operations.firstWhere((o) => o.idOperacion == op.idOperacion && o.moneda == op.moneda && o.importe != op.importe).importe;
+    });
+
     // Remove duplicate List elements
     Set<Operation> set = new Set<Operation>();
-    set.addAll(operations.where((o) => o
-        .isSaldoReal)); // Agregar 1ro las operaciones con saldo real y fecha-hora
+    set.addAll(operations.where((o) => o.isSaldoReal)); // Agregar 1ro las operaciones con saldo real y fecha-hora
     set.addAll(operations
         .where((o) => !o.isSaldoReal)
         .toList()
@@ -77,9 +83,7 @@ class OperationListProvider {
     // Eliminar las operaciones de Consulta de Saldo
     operationsWithSaldo
         .removeWhere((op) => op.tipoOperacion == TipoOperacion.SALDO);
-//        .removeWhere((op) => op.tipoOperacion == TipoOperacion.DEFAULT);
 
-//    return operationsSorted;
     return operationsWithSaldo;
   }
 
@@ -99,6 +103,7 @@ class OperationListProvider {
         if (lines[i].contains("INFO:")) continue;
 
         Operation operation = new Operation();
+        operation.tipoSms = TipoSms.ULTIMAS_OPERACIONES;
 
         var items = lines[i].split(";");
         String dateStr = items[0].trim();
@@ -125,6 +130,7 @@ class OperationListProvider {
       Operation operation = new Operation();
       operation.idOperacion = idOperationSaldo.toString();
       operation.tipoOperacion = TipoOperacion.SALDO;
+      operation.tipoSms = TipoSms.CONSULTAR_SALDO;
       operation.fecha = message.date;
       operation.moneda = getMoneda(lines[2].trim().split(" ")[4].trim());
       operation.saldo = double.parse(lines[1].trim().split(" ")[3].trim());
@@ -139,9 +145,10 @@ class OperationListProvider {
 
       if (tipoSms == TipoSms.FACTURA_PAGADA) {
         operation.idOperacion = lines[3].trim().split(" ")[2].trim();
-        operation.observaciones =
-            "Factura: " + lines[1].trim().split(": ")[1].trim();
+        var factura = lines[1].trim().split(": ")[1].trim();
+        operation.observaciones = "Factura: " + factura;
         operation.tipoOperacion = getTipoOperacion(lines[0]);
+        operation.tipoSms = TipoSms.FACTURA_PAGADA;
         operation.naturaleza = NaturalezaOperacion.DEBITO;
         operation.moneda = getMoneda(lines[2].trim().split(" ")[3].trim());
         operation.importe = double.parse(lines[2].trim().split(" ")[2].trim());
@@ -149,16 +156,24 @@ class OperationListProvider {
         operation.isSaldoReal = true;
       } else if (tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO) {
         operation.idOperacion = lines[0].trim().split(" ")[14].trim();
-        operation.observaciones = "Cuenta: " +
-            lines[0].trim().split("cuenta")[1].trim().split(" ")[0].trim();
+        var cuenta = lines[0].trim().split("cuenta")[1].trim().split(" ")[0].trim();
+        operation.observaciones = "Cuenta: " + cuenta;
         operation.tipoOperacion = TipoOperacion.TRANSFERENCIA;
+        operation.tipoSms = TipoSms.TRANSFERENCIA_RX_SALDO;
         operation.naturaleza = NaturalezaOperacion.CREDITO;
-        operation.moneda = getMoneda(lines[0].trim().split(" ")[11].trim());
+        if(cuenta.substring(0,4) == '9202' || cuenta.substring(0,4) == '9200'){
+          operation.moneda = MONEDA.CUC;
+        }
+        else{
+          operation.moneda = getMoneda(lines[0].trim().split(" ")[11].trim());
+        }
         operation.importe = double.parse(lines[0].trim().split(" ")[10].trim());
       } else if (tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
         operation.idOperacion = lines[5].trim().split(" ")[2].trim();
-        operation.observaciones = lines[1].trim();
+        var cuenta = lines[1].trim().split(" ")[1].trim();
+        operation.observaciones = "Beneficiario: " + cuenta;
         operation.tipoOperacion = TipoOperacion.TRANSFERENCIA;
+        operation.tipoSms = TipoSms.TRANSFERENCIA_TX_SALDO;
         operation.naturaleza = NaturalezaOperacion.DEBITO;
         operation.moneda = getMoneda(lines[3].trim().split(" ")[2].trim());
         operation.importe = double.parse(lines[3].trim().split(" ")[1].trim());
@@ -172,6 +187,9 @@ class OperationListProvider {
 
   static List<Operation> addSaldoToOperationsXMon(List<Operation> operationsSorted, MONEDA moneda) {
     double firstSaldo = 0.0;
+    if(moneda == MONEDA.CUC){
+      var a = '';
+    }
     for (final f in operationsSorted.where((o) => o.moneda == moneda)) {
       if (f.isSaldoReal) {
         firstSaldo += f.saldo;
@@ -182,23 +200,27 @@ class OperationListProvider {
           : firstSaldo -= f.importe;
     }
     double previousSaldo = 0.0;
+    NaturalezaOperacion previousNatOper = NaturalezaOperacion.DEBITO;
     if (operationsSorted.length > 0 && operationsSorted.any((p) => p.moneda == moneda)) {
       operationsSorted.where((o) => o.moneda == moneda).first.saldo = firstSaldo;
       previousSaldo = firstSaldo;
+      previousNatOper = operationsSorted.where((o) => o.moneda == moneda).first.naturaleza;
     }
     double previousImporte = 0.0;
     operationsSorted.where((o) => o.moneda == moneda).forEach((f) {
       if (!f.isSaldoReal) {
-        f.naturaleza == NaturalezaOperacion.CREDITO
+        previousNatOper == NaturalezaOperacion.CREDITO
             ? f.saldo = previousSaldo - previousImporte
             : f.saldo = previousSaldo + previousImporte;
       }
       previousImporte = f.importe;
       previousSaldo = f.saldo;
+      previousNatOper = f.naturaleza;
     });
 
     // TODO: Arreglar funcion de agregar operaciones de ajuste
     // BEGIN - Agregando operaciones de ajuste - CON ERROR
+    /*
     var first = true;
     Operation previousOperation = new Operation();
     List<Operation> operationsFinal = new List<Operation>();
@@ -230,6 +252,7 @@ class OperationListProvider {
       }
       previousOperation = f;
     }
+    */
     // END - Agregando operaciones de ajuste - CON ERROR
 
 //    return operationsFinal;
@@ -333,7 +356,8 @@ class OperationListProvider {
   static MONEDA getMoneda(String cadena) {
     MONEDA moneda = MONEDA.CUP;
     if (cadena != null) {
-      if (cadena.contains("CUC")) moneda = MONEDA.CUC;
+      if (cadena.contains("CUC"))
+        moneda = MONEDA.CUC;
     }
     return moneda;
   }

@@ -1,36 +1,26 @@
 import 'dart:async';
+import 'dart:typed_data';
 
+import 'permisions.dart';
 import 'package:flutter/services.dart';
+import 'package:permission/permission.dart';
 
 import 'operation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sms/contact.dart';
 
 class OperationListItem extends StatelessWidget {
-  final String idOperacion;
-  final double importe;
-  final double saldo;
-  final bool isSaldoReal;
-  final NaturalezaOperacion naturalezaOperacion;
-  final MONEDA moneda;
-  final DateTime date;
-  final TipoOperacion tipoOperacion;
-  final String obs;
+  final Operation operacion;
 
   const OperationListItem({
-    this.idOperacion,
-    this.importe,
-    this.saldo,
-    this.isSaldoReal,
-    this.naturalezaOperacion,
-    this.moneda,
-    this.date,
-    this.tipoOperacion,
-    this.obs,
+    this.operacion,
   });
 
   @override
   Widget build(BuildContext context) {
+
+//    getUser();
 
     List<Widget> listModalContentElements = new List<Widget>();
     getModalContentList(listModalContentElements, context);
@@ -38,29 +28,29 @@ class OperationListItem extends StatelessWidget {
     return Column(
       children: [
         new ListTile(
-          leading: new Icon(getIconData(tipoOperacion),
+          leading: new Icon(getIconData(operacion.tipoOperacion),
               color: Colors.grey, size: 40.0),
-          title: new Text(getOperationTitle(tipoOperacion)),
-          subtitle: new Text(new DateFormat('EEE, d MMM yyyy').format(date)),
+          title: new Text(getOperationTitle(operacion.tipoOperacion)),
+          subtitle: new Text(new DateFormat('EEE, d MMM yyyy').format(operacion.fecha)),
           trailing: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               new Text(
-                (naturalezaOperacion == NaturalezaOperacion.DEBITO
+                (operacion.naturaleza == NaturalezaOperacion.DEBITO
                         ? '-'
                         : '+') +
-                    importe.toStringAsFixed(2) +
+                    operacion.importe.toStringAsFixed(2) +
                     " " +
-                    getMonedaStr(moneda),
+                    getMonedaStr(operacion.moneda),
                 style: TextStyle(
-                  color: getIconColor(naturalezaOperacion),
+                  color: getIconColor(operacion.naturaleza),
                   fontSize: 15.0,
                 ),
               ),
               new Text(
-                saldo.toStringAsFixed(2),
+                operacion.saldo.toStringAsFixed(2),
                 style: TextStyle(
-                  color: isSaldoReal ? Colors.black : Colors.black38,
+                  color: operacion.isSaldoReal ? Colors.black : Colors.black38,
                 ),
               ),
             ],
@@ -75,11 +65,11 @@ class OperationListItem extends StatelessWidget {
                         new Row(
                           children: [
                             Icon(
-                              getIconData(tipoOperacion),
-                              color: getIconColor(naturalezaOperacion),
+                              getIconData(operacion.tipoOperacion),
+                              color: getIconColor(operacion.naturaleza),
                               size: 40.0,
                             ),
-                            new Text(idOperacion),
+                            new Text(operacion.idOperacion),
                           ],
                         ),
                         new Divider(
@@ -102,7 +92,21 @@ class OperationListItem extends StatelessWidget {
     );
   }
 
-  void getModalContentList(List<Widget> listModalContentElements, BuildContext context) {
+  Future getContactName()async {
+    if (operacion.observaciones.length > 0) {
+      var obsArr = operacion.observaciones.split(" ");
+      String obsContent = obsArr[1];
+
+      ContactQuery contacts = new ContactQuery();
+      Contact contact = await contacts.queryContact(obsContent);
+      if(contact.fullName != null){
+        print(contact.fullName);
+      }
+      return contact;
+    }
+  }
+
+  Future getModalContentList(List<Widget> listModalContentElements, BuildContext context) async {
     // Adding IconDate, Date and Time
     listModalContentElements.add(new Wrap(
       direction: Axis.horizontal,
@@ -111,9 +115,9 @@ class OperationListItem extends StatelessWidget {
           Icons.date_range,
           color: Colors.black54,
         ),
-        new Text(new DateFormat('EEE, d MMM yyyy').format(date).toString()),
+        new Text(new DateFormat('EEE, d MMM yyyy').format(operacion.fecha).toString()),
         new Text(', '),
-        new Text(new DateFormat('h:m a').format(date).toString()),
+        new Text(new DateFormat('h:m a').format(operacion.fecha).toString()),
       ],
     ));
 
@@ -137,22 +141,22 @@ class OperationListItem extends StatelessWidget {
 //              Icons.attach_money,
 //              color: Colors.black54,
 //            ),
-            new Text(importe.toStringAsFixed(2)),
-            new Text(getMonedaStr(moneda),style: TextStyle(fontWeight: FontWeight.bold),),
+            new Text(operacion.importe.toStringAsFixed(2)),
+            new Text(getMonedaStr(operacion.moneda),style: TextStyle(fontWeight: FontWeight.bold),),
           ],
         ),
         Row(
           children: [
             new Text(
-              saldo.toStringAsFixed(2),
+              operacion.saldo.toStringAsFixed(2),
               style: TextStyle(
-                color: isSaldoReal ? Colors.black : Colors.black38,
+                color: operacion.isSaldoReal ? Colors.black : Colors.black38,
               ),
             ),
             new Text(
-              getMonedaStr(moneda),
+              getMonedaStr(operacion.moneda),
               style: TextStyle(
-                color: isSaldoReal ? Colors.black : Colors.black38,
+                color: operacion.isSaldoReal ? Colors.black : Colors.black38,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -162,22 +166,38 @@ class OperationListItem extends StatelessWidget {
     ));
 
     // Adding Observations (if needed)
-    if (obs.length > 0) {
+    if (operacion.observaciones.length > 0) {
       listModalContentElements.add(new Text(''));
 
-      String obsTitle = obs.split(" ")[0];
-      String obsContent = obs.split(": ")[1];
+      var obsArr = operacion.observaciones.split(" ");
+      String obsTitle = obsArr[0];
+      String obsContent = obsArr[1];
+      bool esCUC = (obsContent.substring(0,4)=='9202' || obsContent.substring(0,4)=='9200');
 
       listModalContentElements.add(new Text(obsTitle));
+
+      String chipText = obsContent;
+      String chipCurrencyText = '';
+      bool esTransf = false;
+
+      var permissionStatus = await getPermission(PermissionName.ReadContacts);
+      if(permissionStatus == PermissionStatus.allow) {
+        Contact contact = await getContactName();
+        chipText = contact.fullName != null ? contact.fullName : obsContent;
+      }
+
+      if(operacion.tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO || operacion.tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
+        chipCurrencyText = esCUC ? getMonedaStr(MONEDA.CUC) : getMonedaStr(MONEDA.CUP);
+        esTransf = true;
+      }
+
       listModalContentElements.add(
           new ActionChip(
             avatar: new CircleAvatar(
               backgroundColor: Colors.grey.shade800,
-              child: new Icon(
-                Icons.message,size: 18.0, color: Colors.white70,
-              ),
+              child: esTransf ? new Text(chipCurrencyText,style: TextStyle(fontSize: 10.0, color: Colors.white70),) : new Icon(Icons.message,size: 18.0, color: Colors.white70,),
             ),
-            label: new Text(obsContent),
+            label: new Text(chipText),
             onPressed: () {
               Clipboard.setData(new ClipboardData(text: obsContent));
               Scaffold.of(context).showSnackBar(new SnackBar(content: new Text("Copiado al portapapeles $obsContent"),));

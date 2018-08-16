@@ -4,6 +4,7 @@ class Operation{
   String idOperacion;
   DateTime fecha;
   TipoOperacion tipoOperacion;
+  TipoSms tipoSms;
   NaturalezaOperacion naturaleza;
   MONEDA moneda;
   double importe;
@@ -15,6 +16,7 @@ class Operation{
     this.idOperacion = '';
     this.fecha = DateTime.now();
     this.tipoOperacion = TipoOperacion.DEFAULT;
+    this.tipoSms = TipoSms.DEFAULT;
     this.naturaleza = NaturalezaOperacion.DEBITO;
     this.moneda = MONEDA.CUP;
     this.importe = 0.00;
@@ -24,7 +26,8 @@ class Operation{
   }
 
   @override
-  bool operator ==(other) => other is Operation && other.idOperacion == idOperacion;
+  bool operator ==(other) => other is Operation && other.idOperacion + other.moneda.toString() == idOperacion + moneda.toString();
+//  bool operator ==(other) => other is Operation && other.idOperacion == idOperacion;
 
   @override
   int get hashCode {

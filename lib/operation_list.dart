@@ -75,15 +75,7 @@ class OperationList extends StatelessWidget {
       stickyList.add(
         new RegularRow(
             child: new OperationListItem(
-          idOperacion: op.idOperacion,
-          tipoOperacion: op.tipoOperacion,
-          naturalezaOperacion: op.naturaleza,
-          moneda: op.moneda,
-          importe: op.importe,
-          saldo: op.saldo,
-          isSaldoReal: op.isSaldoReal,
-          date: op.fecha,
-          obs: op.observaciones,
+          operacion: op,
         )),
       );
     });

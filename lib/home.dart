@@ -8,6 +8,7 @@ import 'operation.dart';
 // Utils
 import 'operation_list_provider.dart';
 import 'ussd_methods.dart';
+import 'permisions.dart';
 
 // Views
 import 'home_tab.dart';
@@ -71,7 +72,8 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       requestPermissions([
         PermissionName.CallPhone,
         PermissionName.ReceiveSms,
-        PermissionName.ReadSms
+        PermissionName.ReadSms,
+        PermissionName.ReadContacts,
       ]);
     });
 
@@ -95,12 +97,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     tabController.dispose();
 
     super.dispose();
-  }
-
-  Future<PermissionStatus> getPermission(PermissionName permissionName) async {
-    List<Permissions> resultValue =
-        await Permission.getPermissionStatus([permissionName]);
-    return resultValue[0].permissionStatus;
   }
 
   requestPermissions(List<PermissionName> permissionList) async {

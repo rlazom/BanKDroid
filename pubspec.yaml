@@ -10,7 +10,7 @@ dependencies:
   cupertino_icons: '^0.1.2'
   sms: '^0.1.4'
 #  path_provider: '>=0.4.1'
-  shared_preferences: ^0.4.2
+  shared_preferences: '^0.4.2'
   call_number: '^0.0.1'
   intl: '^0.15.7'
   permission: '^0.0.8'
