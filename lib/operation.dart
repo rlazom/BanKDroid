@@ -27,7 +27,6 @@ class Operation{
 
   @override
   bool operator ==(other) => other is Operation && other.idOperacion + other.moneda.toString() == idOperacion + moneda.toString();
-//  bool operator ==(other) => other is Operation && other.idOperacion == idOperacion;
 
   @override
   int get hashCode {
@@ -37,6 +36,8 @@ class Operation{
 
 const Color kColorDebito = Colors.redAccent;
 const Color kColorCredito = Colors.lightGreen;
+const Color kDefaultIconColor = Colors.grey;
+
 
 enum TipoSms{
   CONSULTAR_SALDO,

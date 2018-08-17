@@ -17,8 +17,7 @@ class OperationListProvider {
 
   bool isAlreadyConected(List<SmsMessage> smsCollection, SharedPreferences prefs) {
     if (smsCollection.any((sms) => sms.body.contains("autenticado"))) {
-      smsCollection = smsCollection
-        ..sort((a, b) => b.dateSent.compareTo(a.dateSent));
+      smsCollection..sort((a, b) => b.dateSent.compareTo(a.dateSent));
       DateTime dateSent = smsCollection
           .firstWhere((sms) => sms.body.contains("autenticado"))
           .dateSent;
@@ -46,6 +45,7 @@ class OperationListProvider {
       operations..addAll(operationsSMS);
     });
 
+    // Arreglando los mensajes de transferencia recivida en cuenta CUC con importe en CUP
     operations.where((op) => op.observaciones != "")
         .where((op) => op.tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO && (op.observaciones.split(" ")[1].substring(0,4) == '9202' || op.observaciones.split(" ")[1].substring(0,4) == '9200'))
         .forEach((op) {
@@ -187,9 +187,6 @@ class OperationListProvider {
 
   static List<Operation> addSaldoToOperationsXMon(List<Operation> operationsSorted, MONEDA moneda) {
     double firstSaldo = 0.0;
-    if(moneda == MONEDA.CUC){
-      var a = '';
-    }
     for (final f in operationsSorted.where((o) => o.moneda == moneda)) {
       if (f.isSaldoReal) {
         firstSaldo += f.saldo;
@@ -422,14 +419,14 @@ class OperationListProvider {
             ? resumenTipOpDb += f.importe
             : resumenTipOpCr += f.importe;
       });
+      var listOpsType = listOperations.where((o) => o.tipoOperacion == tipoOp).toList();
 
       ResumeTypeOperation typeOperation =
-          new ResumeTypeOperation(tipoOp, resumenTipOpCr, resumenTipOpDb);
+          new ResumeTypeOperation(tipoOp, resumenTipOpCr, resumenTipOpDb, listOpsType);
       listTypes.add(typeOperation);
     });
 
-    ResumeMonth resumeMonth = new ResumeMonth(
-        listOperations.first.fecha, resumenCr, resumenDb, listTypes);
+    ResumeMonth resumeMonth = new ResumeMonth(listOperations.first.fecha, resumenCr, resumenDb, listTypes);
     return resumeMonth;
   }
 }

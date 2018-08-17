@@ -547,9 +547,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   }
 }
 
-
-
-
 class AppBarTitle extends StatelessWidget {
   final bool isSearch;
   final String title;

@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:call_number/call_number.dart';
 

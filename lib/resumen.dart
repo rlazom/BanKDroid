@@ -4,11 +4,13 @@ class ResumeTypeOperation{
   TipoOperacion tipoOperacion;
   double impCre;
   double impDeb;
+  List<Operation> operations;
 
-  ResumeTypeOperation(TipoOperacion pTipoOperacion,double pImpCre,double pImpDeb){
+  ResumeTypeOperation(TipoOperacion pTipoOperacion, double pImpCre, double pImpDeb, List<Operation> pOperations){
     this.tipoOperacion = pTipoOperacion;
     this.impCre = pImpCre;
     this.impDeb = pImpDeb;
+    this.operations = pOperations;
   }
 }
 

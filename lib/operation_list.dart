@@ -19,9 +19,6 @@ class OperationList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-//    showSearch = true;
-
     if(operaciones.isEmpty){
       return new Center(
         child: new ListView(
@@ -75,7 +72,7 @@ class OperationList extends StatelessWidget {
       stickyList.add(
         new RegularRow(
             child: new OperationListItem(
-          operacion: op,
+          operation: op,
         )),
       );
     });
