@@ -192,13 +192,13 @@ class SaldoActual extends StatelessWidget {
                               ? Icons.arrow_drop_down
                               : Icons.arrow_drop_up,
                           size: 12.0,
-                          color: getIconColor(lastOp.naturaleza),
+                          color: lastOp == null ? null : getIconColor(lastOp.naturaleza),
                         ),
                         new Text(
                           lastOp == null ? '' : lastOp.importe.toStringAsFixed(2),
                           style: TextStyle(
                             fontSize: 12.0,
-                            color: lastOp.naturaleza == NaturalezaOperacion.DEBITO
+                            color: lastOp == null ? null : lastOp.naturaleza == NaturalezaOperacion.DEBITO
                                 ? kColorDebito
                                 : kColorCredito,
                           ),

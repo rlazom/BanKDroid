@@ -50,7 +50,13 @@ class OperationListProvider {
         .where((op) => op.tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO && (op.observaciones.split(" ")[1].substring(0,4) == '9202' || op.observaciones.split(" ")[1].substring(0,4) == '9200'))
         .forEach((op) {
           print(op.fecha.toString() + ' ' + op.idOperacion + ' ' + op.tipoSms.toString() + ' ' + op.observaciones + ' ' + op.moneda.toString() + ' ' + op.importe.toString());
-          op.importe = operations.firstWhere((o) => o.idOperacion == op.idOperacion && o.moneda == op.moneda && o.importe != op.importe).importe;
+          if(operations.any((o) => o.idOperacion == op.idOperacion && o.moneda == op.moneda && o.importe != op.importe)){
+            op.importe = operations.firstWhere((o) => o.idOperacion == op.idOperacion && o.moneda == op.moneda && o.importe != op.importe).importe;
+          }
+          else{
+            op.importe = op.importe / 25.0;
+          }
+
     });
 
     // Remove duplicate List elements
@@ -104,6 +110,9 @@ class OperationListProvider {
 
         Operation operation = new Operation();
         operation.tipoSms = TipoSms.ULTIMAS_OPERACIONES;
+
+        if(lines[i].trim()=="")
+          continue;
 
         var items = lines[i].split(";");
         String dateStr = items[0].trim();

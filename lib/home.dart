@@ -107,8 +107,21 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     }
     print("Solicitar Permisos + loading...");
 
-    List<Permissions> resultValues =
-        await Permission.requestPermissions(permissionList);
+    String platformVersion =  await Permission.platformVersion;
+    int mayorVersion = int.parse(platformVersion.split(' ')[1].split('.')[0]);
+    List<Permissions> resultValues =[];
+    print(platformVersion);
+    print(mayorVersion);
+    if  (mayorVersion<6) {
+      //resultValues = await Permission.requestPermissions(permissionList);
+      permissionList.forEach((f){
+        resultValues.add(new Permissions(f, PermissionStatus.allow));
+      });
+
+    }
+    else {
+      resultValues = await Permission.getPermissionStatus(permissionList);
+    }
 
     if (resultValues.isNotEmpty) {
       if (resultValues.any((p) => p.permissionName == PermissionName.ReadSms)) {
