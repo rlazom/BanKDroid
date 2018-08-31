@@ -1,6 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:call_number/call_number.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+
 
 class MenuAppBar extends StatelessWidget {
   final bool canCall;
@@ -41,7 +46,32 @@ class MenuAppBar extends StatelessWidget {
               children: [
                 new Text('Visor de Operaciones de Banco Metropolitano.\n'),
                 new Text('Ayúdenos a continuar desarrollando la aplicación.'),
-//                new Text('Envíe sus donativos al (+53)53337949'),
+//                FutureBuilder<JsonObject>(
+//                  future: fetchPost(),
+//                  builder: (context, snapshot) {
+//                    if (snapshot.hasData) {
+//                      //return Text(snapshot.data.title +': '+ snapshot.data.details);
+//
+//                      if(snapshot.data.image!=null)
+//                        {
+//                          Uint8List bytes = BASE64.decode(snapshot.data.image);
+//                          return ListTile(
+//                              leading: new Image.memory(bytes),
+//                              title: new Text(snapshot.data.title),
+//                              subtitle: new Text(snapshot.data.details),);
+//                        }
+//                        else
+//                              {
+//                              return Text("no image");
+//                              }
+//                    } else if (snapshot.hasError) {
+//                      return Text("${snapshot.error}");
+//                    }
+//
+//                    // By default, show a loading spinner
+//                    return CircularProgressIndicator();
+//                  },
+//                )
               ],
             ),
           ),
@@ -66,7 +96,47 @@ class MenuAppBar extends StatelessWidget {
     );
   }
 
+  Future<JsonObject> fetchPost() async {
+    final response =
+      await http.get('https://aleguerra05.now.sh/rest1');
+
+    if (response.statusCode == 200) {
+      // If server returns an OK response, parse the JSON
+      var responseJson = json.decode(response.body.toString());
+      return new JsonObject(
+          dateTime: responseJson["CUB0001"]["dateTime"],
+          details: responseJson["CUB0001"]["details"],
+        title: responseJson["CUB0001"]["title"],
+        image: responseJson["CUB0001"]["image"]
+      );
+      return JsonObject.fromJson(json.decode(response.body.toString()));
+    } else {
+      // If that response was not OK, throw an error.
+      throw Exception('Failed to load post');
+    }
+  }
+
   _initCall(String number) async {
     if (number != null) await new CallNumber().callNumber(number);
   }
+}
+
+class JsonObject{
+  final String title;
+  final String details;
+  final String image;
+  final String dateTime;
+
+  JsonObject({this.title, this.details, this.image, this.dateTime});
+
+  factory JsonObject.fromJson(Map<String, dynamic> json){
+    return new JsonObject(
+      title: json['title'],
+      details: json['details'],
+      image: json['image'],
+      dateTime: json['dateTime'],
+    );
+  }
+
+
 }
