@@ -47,7 +47,7 @@ class OperationListProvider {
 
     // Arreglando los mensajes de transferencia recivida en cuenta CUC con importe en CUP
     operations.where((op) => op.observaciones != "")
-        .where((op) => op.tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO && (op.observaciones.split(" ")[1].substring(0,4) == '9202' || op.observaciones.split(" ")[1].substring(0,4) == '9200'))
+        .where((op) => op.tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO && (op.observaciones.split(" ")[1].substring(0,4) == '9202' || op.observaciones.split(" ")[1].substring(0,4) == '9200') && op.fullText.indexOf('CUC') < 0)
         .forEach((op) {
           print(op.fecha.toString() + ' ' + op.idOperacion + ' ' + op.tipoSms.toString() + ' ' + op.observaciones + ' ' + op.moneda.toString() + ' ' + op.importe.toString());
           if(operations.any((o) => o.idOperacion == op.idOperacion && o.moneda == op.moneda && o.importe != op.importe)){
@@ -144,6 +144,7 @@ class OperationListProvider {
       operation.moneda = getMoneda(lines[2].trim().split(" ")[4].trim());
       operation.saldo = double.parse(lines[1].trim().split(" ")[3].trim());
       operation.isSaldoReal = true;
+      operation.fullText = message.body.trim();
       list.add(operation);
     } else if (tipoSms == TipoSms.FACTURA_PAGADA ||
         tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO ||
@@ -151,6 +152,7 @@ class OperationListProvider {
 
       Operation operation = new Operation();
       operation.fecha = message.date;
+      operation.fullText = message.body.trim();
 
       if (tipoSms == TipoSms.FACTURA_PAGADA) {
         operation.idOperacion = lines[3].trim().split(" ")[2].trim();

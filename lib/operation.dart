@@ -11,6 +11,7 @@ class Operation{
   double saldo;
   bool isSaldoReal;
   String observaciones;
+  String fullText;
 
   Operation(){
     this.idOperacion = '';
@@ -23,6 +24,7 @@ class Operation{
     this.saldo = -1.00;
     this.isSaldoReal = false;
     this.observaciones = '';
+    this.fullText = '';
   }
 
   @override

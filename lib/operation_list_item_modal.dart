@@ -116,7 +116,9 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
         new ActionChip(
           avatar: new CircleAvatar(
             backgroundColor: Colors.grey.shade800,
-            child: esTransf ? new Text(chipCurrencyText,style: TextStyle(fontSize: 10.0, color: Colors.white70),) : new Icon(Icons.message,size: 18.0, color: Colors.white70,),
+            child: esTransf
+                ? new Text(chipCurrencyText,style: TextStyle(fontSize: 10.0, color: Colors.white70),)
+                : new Icon(Icons.message,size: 18.0, color: Colors.white70,),
           ),
           label: new Text(chipText),
           onPressed: () {
