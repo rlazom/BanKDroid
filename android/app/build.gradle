@@ -1,3 +1,6 @@
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
@@ -21,13 +24,18 @@ android {
         disable 'InvalidPackage'
     }
 
+    DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd")
+    Calendar calendar = Calendar.getInstance()
+    String fecha = dateFormat.format(calendar.getTime())
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "cu.makkura.bankdroid"
         minSdkVersion 16
         targetSdkVersion 24
-        versionCode 1
-        versionName "1.0"
+        // versionCode 1
+        // versionName "1.0"
+        versionName "${fecha}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
