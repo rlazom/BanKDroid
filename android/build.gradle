@@ -1,8 +1,17 @@
 buildscript {
     repositories {
         mavenLocal()
-        google()
-        jcenter()
+        maven{
+            url 'https://nexus.datys.cu/content/repositories/android-support-repository/'
+        }
+        maven{
+            url 'https://nexus.datys.cu/content/repositories/google-maven/'
+        }
+        maven{
+            url 'https://nexus.datys.cu/content/repositories/apache/'
+        }
+//        google()
+//        jcenter()
     }
 
     dependencies {
@@ -13,8 +22,17 @@ buildscript {
 allprojects {
     repositories {
         mavenLocal()
-        google()
-        jcenter()
+        maven{
+            url 'https://nexus.datys.cu/content/repositories/android-support-repository/'
+        }
+        maven{
+            url 'https://nexus.datys.cu/content/repositories/google-maven/'
+        }
+        maven{
+            url 'https://nexus.datys.cu/content/repositories/apache/'
+        }
+//        google()
+//        jcenter()
     }
 }
 

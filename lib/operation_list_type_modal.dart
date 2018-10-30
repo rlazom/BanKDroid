@@ -13,8 +13,9 @@ void showOperationsTypeModal(BuildContext context, List<Operation> operations){
           title: Column(
             children: [
               new Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  new Icon(
                     getIconData(operations.first.tipoOperacion),
                     color: kDefaultIconColor,
                     size: 40.0,
@@ -22,11 +23,16 @@ void showOperationsTypeModal(BuildContext context, List<Operation> operations){
                   new Text(getOperationTitle(operations.first.tipoOperacion)),
                 ],
               ),
+              new Divider(
+                height: 0.0,
+              ),
             ],
           ),
-          content: new ListView(
-            shrinkWrap: true,
-            children: listModalContentElements,
+          content: new Scrollbar(
+            child: new ListView(
+              shrinkWrap: true,
+              children: listModalContentElements,
+            ),
           ),
         );
       });

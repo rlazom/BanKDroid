@@ -22,7 +22,8 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 
 // Plugins
-import 'package:permission/permission.dart';
+//import 'package:permission/permission.dart';
+import 'package:simple_permissions/simple_permissions.dart';
 import 'package:sms/sms.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -33,7 +34,8 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => new _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
+class _MyHomePageState extends State<MyHomePage>
+    with SingleTickerProviderStateMixin {
   SharedPreferences prefs;
 
   ScrollController _hideButtonController = new ScrollController();
@@ -70,17 +72,17 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
     new Timer(const Duration(seconds: 3), () {
       requestPermissions([
-        PermissionName.CallPhone,
-        PermissionName.ReceiveSms,
-        PermissionName.ReadSms,
-        PermissionName.ReadContacts,
-      ]);
-    });
-
-    getPermission(PermissionName.ReceiveSms).then((permissionStatus) {
-      if (permissionStatus == PermissionStatus.allow) {
-        _initSMSListener();
-      }
+        Permission.CallPhone,
+        Permission.ReceiveSms,
+        Permission.ReadSms,
+        Permission.ReadContacts,
+      ]).then((_) {
+        getPermission(Permission.ReceiveSms).then((permissionStatus) {
+          if (permissionStatus == PermissionStatus.authorized) {
+            _initSMSListener();
+          }
+        });
+      });
     });
 
     // Listeners
@@ -99,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  requestPermissions(List<PermissionName> permissionList) async {
+  requestPermissions(List<Permission> permissionList) async {
     if (!_loading) {
       setState(() {
         _loading = true;
@@ -107,28 +109,34 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     }
     print("Solicitar Permisos + loading...");
 
-    String platformVersion =  await Permission.platformVersion;
+    String platformVersion = await SimplePermissions.platformVersion;
     int mayorVersion = int.parse(platformVersion.split(' ')[1].split('.')[0]);
     print(platformVersion);
-//    print(mayorVersion);
+    print(mayorVersion);
+    print(mayorVersion < 6);
 
-    List<Permissions> resultValues =[];
+    List resultValues = [];
+    PermissionStatus resultValue;
 
     if(mayorVersion < 6) {
-      //resultValues = await Permission.requestPermissions(permissionList);
-      permissionList.forEach((f){
-        resultValues.add(new Permissions(f, PermissionStatus.allow));
+      permissionList.forEach((f) {
+        resultValues.add({'permission': f, 'permissionStatus':PermissionStatus.authorized});
       });
     }
     else {
-      resultValues = await Permission.getPermissionStatus(permissionList);
+      for(int i = 0; i < permissionList.length; i++){
+        Permission p = permissionList[i];
+        resultValue = await SimplePermissions.requestPermission(p);
+        resultValues.add({'permission':p, 'permissionStatus':resultValue});
+      }
+      print(resultValues);
     }
 
-    if (resultValues.isNotEmpty) {
-      if (resultValues.any((p) => p.permissionName == PermissionName.ReadSms)) {
-        if (resultValues
-                .firstWhere((rv) => rv.permissionName == PermissionName.ReadSms)
-                .permissionStatus == PermissionStatus.allow) {
+    if(resultValues.isNotEmpty) {
+      if(resultValues.any((p) => p['permission'] == Permission.ReadSms)) {
+        if(resultValues
+            .firstWhere((rv) => rv['permission'] == Permission.ReadSms)
+            ['permissionStatus'] == PermissionStatus.authorized) {
           print("Permitir SMS");
           setState(() {
             _canReadSMS = true;
@@ -155,12 +163,12 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       }
 
       if (resultValues
-          .any((p) => p.permissionName == PermissionName.CallPhone)) {
+          .any((p) => p['permission'] == Permission.CallPhone)) {
         if (resultValues
-                .firstWhere(
-                    (rv) => rv.permissionName == PermissionName.CallPhone)
-                .permissionStatus ==
-            PermissionStatus.allow) {
+            .firstWhere(
+                (rv) => rv['permission'] == Permission.CallPhone)
+            ['permissionStatus'] ==
+            PermissionStatus.authorized) {
           setState(() {
             _canCall = true;
           });
@@ -226,7 +234,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               _resumenOperacionesCUC = new List<ResumeMonth>();
               _resumenOperacionesCUP = new List<ResumeMonth>();
 
-              requestPermissions([PermissionName.ReadSms]);
+              requestPermissions([Permission.ReadSms]);
               new Timer(const Duration(seconds: 5), () {
                 if (_loading) {
                   setState(() {
@@ -243,18 +251,21 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
   void _initScrollListener() {
     _hideButtonController.addListener(() {
-      if (_hideButtonController.position.userScrollDirection == ScrollDirection.reverse) {
+      if (_hideButtonController.position.userScrollDirection ==
+          ScrollDirection.reverse) {
         setState(() {
           _isFABButtonVisible = false;
         });
       }
-      if (_hideButtonController.position.userScrollDirection == ScrollDirection.forward) {
+      if (_hideButtonController.position.userScrollDirection ==
+          ScrollDirection.forward) {
         setState(() {
           _isFABButtonVisible = true;
         });
       }
     });
   }
+
   void _initFilterListener() {
     filterCtrl.addListener(() {
       setState(() {
@@ -262,11 +273,11 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       });
     });
   }
+
   void _initTabControllerListener() {
     tabController = new TabController(length: 3, vsync: this);
     tabController.addListener(() {
-      setState(() {
-      });
+      setState(() {});
     });
   }
 
@@ -279,15 +290,15 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     }
 
     // Cargar la lista de mensajes
-//    _opListProvider.readSms().then((messages) {
+//    _opListProvider.ReadSms().then((messages) {
 //      _opListProvider.reloadSMSOperations(messages).then(_onReloadSMSOperations);
 //    });
 
-    List<SmsMessage> listSMS = await _opListProvider.readSms();
+    List<SmsMessage> listSMS = await _opListProvider.ReadSms();
     print("Leidos los SMS, antes de recargar las operaciones");
 
     List<Operation> listOperations =
-        await _opListProvider.reloadSMSOperations(listSMS);
+    await _opListProvider.reloadSMSOperations(listSMS);
     print("Recargadas las operaciones, antes de cargar listas CUP y CUC");
     print("Saldo CUP: " + _opListProvider.saldoCUP.toString());
     print("Saldo CUC: " + _opListProvider.saldoCUC.toString());
@@ -317,19 +328,21 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     _filteredCUC = new List<Operation>();
 
 //    setState(() {
-      _operacionesCUP.addAll(operaciones.where((o) => o.moneda == MONEDA.CUP).toList());
-      print("OnLoadedCUP_OperationList");
-      _resumenOperacionesCUP = _operacionesCUP.isNotEmpty
-          ? _opListProvider.getResumenOperaciones(_operacionesCUP)
-          : new List<ResumeMonth>();
-      print("OnLoadedCUP_resumenOperacionesCUP");
+    _operacionesCUP.addAll(
+        operaciones.where((o) => o.moneda == MONEDA.CUP).toList());
+    print("OnLoadedCUP_OperationList");
+    _resumenOperacionesCUP = _operacionesCUP.isNotEmpty
+        ? _opListProvider.getResumenOperaciones(_operacionesCUP)
+        : new List<ResumeMonth>();
+    print("OnLoadedCUP_resumenOperacionesCUP");
 
-      _operacionesCUC.addAll(operaciones.where((o) => o.moneda == MONEDA.CUC).toList());
-      print("OnLoadedCUC_OperationList");
-      _resumenOperacionesCUC = _operacionesCUC.isNotEmpty
-          ? _opListProvider.getResumenOperaciones(_operacionesCUC)
-          : new List<ResumeMonth>();
-      print("OnLoadedCUC_resumenOperacionesCUC");
+    _operacionesCUC.addAll(
+        operaciones.where((o) => o.moneda == MONEDA.CUC).toList());
+    print("OnLoadedCUC_OperationList");
+    _resumenOperacionesCUC = _operacionesCUC.isNotEmpty
+        ? _opListProvider.getResumenOperaciones(_operacionesCUC)
+        : new List<ResumeMonth>();
+    print("OnLoadedCUC_resumenOperacionesCUC");
 
     setState(() {
       _filteredCUP.addAll(_operacionesCUP);
@@ -349,7 +362,8 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       length: 3,
       child: new Scaffold(
         appBar: new AppBar(
-          bottom: !_canReadSMS ? null : new TabBar(tabs: tabsHeader, controller: tabController,),
+          bottom: !_canReadSMS ? null : new TabBar(
+            tabs: tabsHeader, controller: tabController,),
 //          title: new Text(widget.title),
           title: AppBarTitle(
             title: widget.title,
@@ -365,14 +379,14 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 //            ),
             tabController.index != 0
                 ? new IconButton(
-                  icon: Icon(_isSearch ? Icons.close : Icons.search),
-                  onPressed: _toggleSearch,
-                )
+              icon: Icon(_isSearch ? Icons.close : Icons.search),
+              onPressed: _toggleSearch,
+            )
                 : new Container(),
             MenuAppBar(
               canCall: _canCall,
               requestPermissions: () {
-                setState(() => requestPermissions([PermissionName.CallPhone]));
+                setState(() => requestPermissions([Permission.CallPhone]));
               },
             ),
           ],
@@ -380,51 +394,51 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         body: _loading
             ? Center(child: new CircularProgressIndicator())
             : !_canReadSMS
-                ? new Center(
-                    child: new Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      new Icon(
-                        Icons.not_interested,
-                        size: 50.0,
-                        color: Colors.black54,
-                      ),
-                      new Text("Sin Acceso a sus SMS"),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: new Text(
-                            "Haga Click Aqui para solicitarlos nuevamente"),
-                      ),
-                      FloatingActionButton(
-                          onPressed: () {
-                            requestPermissions([PermissionName.ReadSms]);
-                          },
-                          mini: true,
-                          child: new Icon(
-                            Icons.refresh,
-                          )),
-                    ],
-                  ))
-                : TabBarView(children: tabsContent, controller: tabController,),
+            ? new Center(
+            child: new Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                new Icon(
+                  Icons.not_interested,
+                  size: 50.0,
+                  color: Colors.black54,
+                ),
+                new Text("Sin Acceso a sus SMS"),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: new Text(
+                      "Haga Click Aqui para solicitarlos nuevamente"),
+                ),
+                FloatingActionButton(
+                    onPressed: () {
+                      requestPermissions([Permission.ReadSms]);
+                    },
+                    mini: true,
+                    child: new Icon(
+                      Icons.refresh,
+                    )),
+              ],
+            ))
+            : TabBarView(children: tabsContent, controller: tabController,),
         floatingActionButton: !_canReadSMS || !_isFABButtonVisible
             ? null
             : FloatingActionButton(
-                elevation: 2.0,
-                onPressed: _loading ? null : _toggleConect,
-                child: _conected
-                    ? new Icon(Icons.phonelink_erase)
-                    : new Icon(Icons.speaker_phone),
-                backgroundColor: _loading
-                    ? Colors.grey
-                    : _conected ? Colors.lightGreen : Colors.blue,
-                tooltip: _conected ? "Desconectar" : "Conectar",
-              ),
+          elevation: 2.0,
+          onPressed: _loading ? null : _toggleConect,
+          child: _conected
+              ? new Icon(Icons.phonelink_erase)
+              : new Icon(Icons.speaker_phone),
+          backgroundColor: _loading
+              ? Colors.grey
+              : _conected ? Colors.lightGreen : Colors.blue,
+          tooltip: _conected ? "Desconectar" : "Conectar",
+        ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: !_isFABButtonVisible
             ? null
             : BottomAppBarWidget(
-                disable: !_conected,
-              ),
+          disable: !_conected,
+        ),
       ),
     );
   }
@@ -473,6 +487,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
     return tempListHeaders;
   }
+
   List<Widget> getTabsContents() {
     List<Widget> tempListContents = new List<Widget>();
 
@@ -507,7 +522,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   }
 
   void _toggleSearch() {
-    if(_isSearch){
+    if (_isSearch) {
       filter = '';
       _searchOperation(filter);
 
@@ -526,11 +541,11 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     _filteredCUP.clear();
     _filteredCUC.clear();
 
-    if(filter == '') {
+    if (filter == '') {
       _filteredCUP.addAll(_operacionesCUP);
       _filteredCUC.addAll(_operacionesCUC);
     }
-    else{
+    else {
       setState(() {
         _stickyScrollController.jumpTo(0.0);
 //        _filteredCUP.addAll(_operacionesCUP
@@ -544,15 +559,22 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     }
   }
 
-  List<Operation> filterOperations(List<Operation> operaciones){
+  List<Operation> filterOperations(List<Operation> operaciones) {
     List<Operation> filteredList = new List<Operation>();
-    operaciones.forEach((op){
-      if(getOperationTitle(op.tipoOperacion).toLowerCase().contains(filter.toLowerCase())
-        || new DateFormat('d M yyyy d-M-yyyy d/M/yyyy').format(op.fecha).toString().toLowerCase().contains(filter.toLowerCase())
-        || new DateFormat('d MM yyyy d-MM-yyyy d/MM/yyyy').format(op.fecha).toString().toLowerCase().contains(filter.toLowerCase())
-        || new DateFormat('M MM MMM MMMM yyyy').format(op.fecha).toString().toLowerCase().contains(filter.toLowerCase())
-        || op.importe.toStringAsFixed(2).contains(filter.toLowerCase())
-      ){
+    operaciones.forEach((op) {
+      if (getOperationTitle(op.tipoOperacion).toLowerCase().contains(
+          filter.toLowerCase())
+          || new DateFormat('d M yyyy d-M-yyyy d/M/yyyy').format(op.fecha)
+              .toString().toLowerCase()
+              .contains(filter.toLowerCase())
+          || new DateFormat('d MM yyyy d-MM-yyyy d/MM/yyyy').format(op.fecha)
+              .toString().toLowerCase()
+              .contains(filter.toLowerCase())
+          || new DateFormat('M MM MMM MMMM yyyy').format(op.fecha).toString()
+              .toLowerCase()
+              .contains(filter.toLowerCase())
+          || op.importe.toStringAsFixed(2).contains(filter.toLowerCase())
+      ) {
         filteredList.add(op);
       }
     });
@@ -578,16 +600,16 @@ class AppBarTitle extends StatelessWidget {
     return !isSearch
         ? new Text(title)
         : new TextField(
-            controller: filterCtrl,
-            style: TextStyle(
-              color: Colors.white,
-            ),
-            decoration: new InputDecoration(
-              prefixIcon: new Icon(Icons.search, color: Colors.white,),
-              hintText: "Filtrar...",
-              hintStyle: new TextStyle(color: Colors.white,),
-            ),
-            onChanged: searchOperation,
-          );
+      controller: filterCtrl,
+      style: TextStyle(
+        color: Colors.white,
+      ),
+      decoration: new InputDecoration(
+        prefixIcon: new Icon(Icons.search, color: Colors.white,),
+        hintText: "Filtrar...",
+        hintStyle: new TextStyle(color: Colors.white,),
+      ),
+      onChanged: searchOperation,
+    );
   }
 }

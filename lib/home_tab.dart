@@ -77,25 +77,26 @@ class _HomeDashboardState extends State<HomeDashboard> {
   List<Widget> generateDashBoardWidgets(int cantLists){
     List<Widget> dashboardWidgets = new List<Widget>();
 
-    dashboardWidgets.add(SaldoActual(
-      saldo: isCurrencyCUP ? widget.saldoCUP : widget.saldoCUC,
-      lastOp: isCurrencyCUP
-          ? widget.lastOperationCUP != null
-          ? widget.lastOperationCUP
-          : null
-          : widget.lastOperationCUC != null
-          ? widget.lastOperationCUC
-          : null,
-      moneda: isCurrencyCUP ? MONEDA.CUP : MONEDA.CUC,
-      cantLists: cantLists,
-      onToggleCurrency: onToggleCurrency,
-    ));
+    dashboardWidgets.add(
+        SaldoActual(
+          saldo: isCurrencyCUP ? widget.saldoCUP : widget.saldoCUC,
+          lastOp: isCurrencyCUP
+              ? widget.lastOperationCUP != null
+              ? widget.lastOperationCUP
+              : null
+              : widget.lastOperationCUC != null
+              ? widget.lastOperationCUC
+              : null,
+          moneda: isCurrencyCUP ? MONEDA.CUP : MONEDA.CUC,
+          cantLists: cantLists,
+          onToggleCurrency: onToggleCurrency,
+        ));
 
     List<ResumeMonth> resume = isCurrencyCUP
         ? widget.resumeOperationsCUP
         : widget.resumeOperationsCUC;
 
-    if (resume.isNotEmpty) {
+    if(resume.isNotEmpty) {
       resume.forEach((resumenMensual) {
         dashboardWidgets.add(ResumenMensual(
           fecha: resumenMensual.fecha,
@@ -248,7 +249,11 @@ class ResumenMensual extends StatelessWidget {
 
     resumeList.add(generateResumeCard());
     resumeList.addAll(generateResumeListTiposOperations());
-
+    resumeList.add(
+      new Divider(
+        height: 10.0,
+      ),
+    );
 
     return new Padding(
       padding: const EdgeInsets.all(10.0),
@@ -264,7 +269,7 @@ class ResumenMensual extends StatelessWidget {
         children: [
           new Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Row(
+            child: new Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 new Expanded(
@@ -288,7 +293,7 @@ class ResumenMensual extends StatelessWidget {
               ],
             ),
           ),
-          Padding(
+          new Padding(
             padding:
             const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
             child: new Row(
@@ -365,12 +370,6 @@ class ResumenMensual extends StatelessWidget {
         operations: operationType.operations,
       ));
     });
-    list.add(Padding(
-      padding: const EdgeInsets.only(top: 10.0),
-      child: new Divider(
-        height: 10.0,
-      ),
-    ));
 
     return list;
   }
@@ -400,29 +399,24 @@ class OperacionGastoIngresoListItem extends StatelessWidget {
         child: new Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Padding(
+            new Padding(
               padding: const EdgeInsets.only(left: 10.0),
-              child: new Column(
+              child: new Row(
                 children: [
-                  new Row(
-                    children: [
-                      new Icon(
-                        getIconData(tipoOperacion),
-                        color: Colors.grey,
-                        size: 18.0,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: new Text(getOperationTitle(tipoOperacion)),
-                      ),
-                    ],
-                  )
+                  new Icon(
+                    getIconData(tipoOperacion),
+                    color: Colors.grey,
+                    size: 18.0,
+                  ),
+                  new Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: new Text(getOperationTitle(tipoOperacion)),
+                  ),
                 ],
               ),
             ),
-            Padding(
-              padding:
-                  const EdgeInsets.only(right: 10.0, top: 5.0, bottom: 5.0),
+            new Padding(
+              padding: const EdgeInsets.only(right: 10.0, top: 5.0, bottom: 5.0),
               child: new Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [

@@ -10,7 +10,7 @@ class OperationListProvider {
   double saldoCUP;
   double saldoCUC;
 
-  Future<List<SmsMessage>> readSms() async {
+  Future<List<SmsMessage>> ReadSms() async {
     SmsQuery query = new SmsQuery();
     return await query.querySms(address: "PAGOxMOVIL");
   }

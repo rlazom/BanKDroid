@@ -11,4 +11,5 @@ build/
 \.idea/libraries/
 
 .idea/**
+android/.idea/**
 *.iml

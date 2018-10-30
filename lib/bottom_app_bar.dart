@@ -11,7 +11,8 @@ class BottomAppBarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
-      hasNotch: true,
+      notchMargin: 10.0,
+//      hasNotch: true,
       child: new Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

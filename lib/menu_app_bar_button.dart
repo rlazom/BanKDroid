@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:call_number/call_number.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+//import 'package:http/http.dart' as http;
 
 
 
@@ -96,25 +96,25 @@ class MenuAppBar extends StatelessWidget {
     );
   }
 
-  Future<JsonObject> fetchPost() async {
-    final response =
-      await http.get('https://aleguerra05.now.sh/rest1');
-
-    if (response.statusCode == 200) {
-      // If server returns an OK response, parse the JSON
-      var responseJson = json.decode(response.body.toString());
-      return new JsonObject(
-          dateTime: responseJson["CUB0001"]["dateTime"],
-          details: responseJson["CUB0001"]["details"],
-        title: responseJson["CUB0001"]["title"],
-        image: responseJson["CUB0001"]["image"]
-      );
-      return JsonObject.fromJson(json.decode(response.body.toString()));
-    } else {
-      // If that response was not OK, throw an error.
-      throw Exception('Failed to load post');
-    }
-  }
+//  Future<JsonObject> fetchPost() async {
+//    final response =
+//      await http.get('https://aleguerra05.now.sh/rest1');
+//
+//    if (response.statusCode == 200) {
+//      // If server returns an OK response, parse the JSON
+//      var responseJson = json.decode(response.body.toString());
+//      return new JsonObject(
+//          dateTime: responseJson["CUB0001"]["dateTime"],
+//          details: responseJson["CUB0001"]["details"],
+//        title: responseJson["CUB0001"]["title"],
+//        image: responseJson["CUB0001"]["image"]
+//      );
+//      return JsonObject.fromJson(json.decode(response.body.toString()));
+//    } else {
+//      // If that response was not OK, throw an error.
+//      throw Exception('Failed to load post');
+//    }
+//  }
 
   _initCall(String number) async {
     if (number != null) await new CallNumber().callNumber(number);
