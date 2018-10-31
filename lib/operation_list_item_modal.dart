@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'package:simple_permissions/simple_permissions.dart';
 import 'package:sms/contact.dart';
-//import 'package:android_intent/android_intent.dart';
+//import 'package:contacts_service/contacts_service.dart';
 
 import 'permisions.dart';
 import 'package:intl/intl.dart';
@@ -129,12 +129,16 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
     bool esTransf = false;
     Uint8List thumbnail = null;
 
+    // Adding Chip Row:: Loading Contacts Data
     var readContactsPermissionStatus = await getPermission(Permission.ReadContacts);
+    var writeContactsPermissionStatus = await getPermission(Permission.WriteContacts);
     if (readContactsPermissionStatus == PermissionStatus.authorized) {
       Contact contact = await getContactName(operation);
 
       chipText = contact.fullName != null ? contact.fullName : obsContent;
       thumbnail = contact.thumbnail != null ? contact.thumbnail.bytes : null;
+//      chipText = contact.displayName != null ? contact.displayName : obsContent;
+//      thumbnail = contact.avatar != null ? contact.avatar : null;
     }
 
     if (operation.tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO ||
@@ -143,14 +147,67 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
       esTransf = true;
     }
 
-    List<Widget> listModalChipElements = new List<Widget>();
-    List<Widget> chipLabelRowElements = new List<Widget>();
+    List<Widget> chipRowElements = new List<Widget>();
 
-    chipLabelRowElements.add(
-      new Expanded(child: new Text(chipText)),
+    // Adding Chip Row:: Adding Button to add Card Number to Contact or Avatar
+    chipRowElements.add(
+      thumbnail != null
+      ? new Padding(    // IMAGEN del Avatar del Contacto
+        padding: const EdgeInsets.only(top: 5.0, bottom: 5.0, right: 5.0),
+        child: new Container(
+          width: 30.0,
+          height: 30.0,
+          decoration: BoxDecoration(
+            image: new DecorationImage(
+              image: new MemoryImage(thumbnail),
+            ),
+            borderRadius: new BorderRadius.circular(250.0),
+          ),
+        ),
+      )// IMAGEN del Avatar del Contacto
+      : new Padding(    // CircleButton para agregar numero de tarjeta a Contactos o Inicial del Nombre del Contacto
+        padding: const EdgeInsets.only(top: 5.0, bottom: 5.0, right: 5.0),
+        child: new GestureDetector(
+          onTap: (){ chipText != obsContent ? null : _createOrEditContact(obsContent, chipCurrencyText, writeContactsPermissionStatus);},
+          child: new CircleAvatar(
+            maxRadius: 15.0,
+            backgroundColor: Colors.grey.shade800,
+            child: esTransf
+              ? chipText == obsContent
+                ? new Icon(Icons.person_add, size: 18.0, color: Colors.white70,)
+                : new Text(chipText.substring(0,1), style: TextStyle(fontSize: 16.0, color: Colors.grey,),)
+              : new Icon(Icons.confirmation_number, size: 18.0, color: Colors.white70,),
+          ),
+        ),
+      )// CircleButton para agregar numero de tarjeta a Contactos o Inicial del Nombre del Contacto
     );
-    if(esTransf && thumbnail != null){
-      chipLabelRowElements.add(
+
+    // Adding Chip Row:: Adding Card Number or Contact Name
+    chipRowElements.add(
+      new Expanded(
+          child: new InkWell(
+            onTap: (){
+              Clipboard.setData(new ClipboardData(text: obsContent));
+              Scaffold.of(context).showSnackBar(new SnackBar(
+                content: new Text("Copiado al portapapeles $obsContent"),
+              ));
+              new Timer(const Duration(seconds: 3), () {
+                Scaffold.of(context).hideCurrentSnackBar();
+              });
+            },
+            child: new Text(
+              chipText,
+              style: TextStyle(
+                  fontSize: 14.0,
+              ),
+            )
+          )
+      ),
+    );
+
+    // Adding Chip Row:: Adding Credit Card Icon and Currency Text CUP/CUC
+    if(esTransf){
+      chipRowElements.add(
           new Stack(
             children: [
               new Icon(Icons.credit_card, size: 36.0, color: Colors.grey.shade500,),
@@ -167,72 +224,37 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
       );
     }
 
-    listModalChipElements.add(
-        new Expanded(
-          child: new ActionChip(
-            avatar: thumbnail != null
-                ? Container(
-                  width: 50.0,
-                  height: 50.0,
-                  decoration: BoxDecoration(
-                    image: new DecorationImage(
-                      image: new MemoryImage(thumbnail),
-                    ),
-                    borderRadius: new BorderRadius.circular(250.0),
-                  ),
-                )
-                : new CircleAvatar(
-                  backgroundColor: Colors.grey.shade800,
-                  child: esTransf
-                      ? new Text(chipCurrencyText, style: TextStyle(fontSize: 10.0, color: Colors.grey,),)
-                      : new Icon(Icons.confirmation_number, size: 18.0, color: Colors.white70,),
-                ),
-            label: Row(
-              children: chipLabelRowElements,
-            ),
-            onPressed: () {
-              Clipboard.setData(new ClipboardData(text: obsContent));
-              Scaffold.of(context).showSnackBar(new SnackBar(
-                content: new Text("Copiado al portapapeles $obsContent"),
-              ));
-              new Timer(const Duration(seconds: 3), () {
-                Scaffold.of(context).hideCurrentSnackBar();
-              });
-            },
-          ),
-        )
-    );
-    if(chipText == obsContent){
-      listModalChipElements.add(
-          new FloatingActionButton(
-            elevation: readContactsPermissionStatus == PermissionStatus.authorized ? 1.0 : 0.0,
-            tooltip: "Agregar a Contactos",
-            child: new Icon(Icons.person_add),
-            backgroundColor: readContactsPermissionStatus == PermissionStatus.authorized ? Colors.grey.shade800 : Colors.grey,
-            mini: true,
-            onPressed:(){ readContactsPermissionStatus == PermissionStatus.authorized ? _createOrEditContact(obsContent,chipCurrencyText) : null;},
-          )
-      );
-    }
-
-
-    // Adding Row with Chip and Button
+    // Adding Chip Row
     listModalContentElements.add(new Row(
-      children: listModalChipElements,
+      children: [
+        new Expanded(
+            child: new Container(
+              decoration: ShapeDecoration(
+                  color: Colors.black12,
+                  shape: RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0))
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                child: new Row(
+                  children: chipRowElements,
+                ),
+              ),
+            )
+        )
+      ],
     ));
   }
   return listModalContentElements;
 }
 
-void _createOrEditContact(String pan, String pan_label) {
-
-  var arguments = <String, dynamic>{
-    'pan': pan,
-    'pan_label': pan_label,
-  };
-
-  CHANNEL.invokeMethod("selectContacts",arguments);
-
+void _createOrEditContact(String pan, String pan_label, PermissionStatus writeContactsPermissionStatus) {
+  if (writeContactsPermissionStatus == PermissionStatus.authorized) {
+    var arguments = <String, dynamic>{
+      'pan': pan,
+      'pan_label': pan_label,
+    };
+    CHANNEL.invokeMethod("selectContacts",arguments);
+  }
 }
 
 Future getContactName(Operation operation) async {
@@ -246,5 +268,15 @@ Future getContactName(Operation operation) async {
       print(contact.fullName);
     }
     return contact;
+
+//    Iterable<Contact> contact = await ContactsService.getContacts(query : obsContent);
+//    Iterable<Contact> contact = await ContactsService.getContacts(query : 'Abuela');
+
+//    var allContacts = await ContactsService.getContacts();
+//    var filtered = allContacts.where((c) => c.phones.any((phone) => phone.value.contains(obsContent))).toList();
+//    if(filtered.length > 0){
+//      var contact = filtered.first;
+//      return contact;
+//    }
   }
 }

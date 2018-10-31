@@ -10,13 +10,29 @@ Future<PermissionStatus> getPermission(Permission permission) async {
   print(platformVersion);
   print(mayorVersion);
 
-  PermissionStatus resultValue;
+  PermissionStatus resultValue = PermissionStatus.deniedNeverAsk;
 
   if(mayorVersion < 6) {
     resultValue = PermissionStatus.authorized;
   }
   else {
-    resultValue = await SimplePermissions.requestPermission(permission);
+    bool checkPermissionStatus = await SimplePermissions.checkPermission(permission);
+    print(checkPermissionStatus);
+    if(!checkPermissionStatus) {
+      if(permission == Permission.WriteContacts){
+        bool checkReadContactsPermissionStatus = await SimplePermissions.checkPermission(Permission.ReadContacts);
+        print(checkReadContactsPermissionStatus);
+        if(checkReadContactsPermissionStatus){
+          resultValue = PermissionStatus.authorized;
+        }
+      }
+      else{
+        resultValue = await SimplePermissions.requestPermission(permission);
+      }
+    }
+    else{
+      resultValue = PermissionStatus.authorized;
+    }
   }
   return resultValue;
 }

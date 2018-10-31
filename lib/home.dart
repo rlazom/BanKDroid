@@ -34,8 +34,11 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => new _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>
-    with SingleTickerProviderStateMixin {
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKeyCup = new GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKeyCuc = new GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
   SharedPreferences prefs;
 
   ScrollController _hideButtonController = new ScrollController();
@@ -99,6 +102,41 @@ class _MyHomePageState extends State<MyHomePage>
     tabController.dispose();
 
     super.dispose();
+  }
+
+  Future<Null> _handleRefresh() {
+    setState(() {
+      _loading = true;
+    });
+    final Completer<Null> completer = new Completer<Null>();
+
+    new Timer(const Duration(seconds: 3), () {
+      _operacionesCUC = new List<Operation>();
+      _operacionesCUP = new List<Operation>();
+      _resumenOperacionesCUC = new List<ResumeMonth>();
+      _resumenOperacionesCUP = new List<ResumeMonth>();
+
+      _reloadSMSOperations();
+      new Timer(const Duration(seconds: 5), () {
+        if (_loading) {
+          setState(() {
+            _loading = false;
+          });
+        }
+      });
+    });
+
+    return completer.future.then((_) {
+      _scaffoldKey.currentState?.showSnackBar(new SnackBar(
+          content: const Text('Refresh complete'),
+          action: new SnackBarAction(
+              label: 'RETRY',
+              onPressed: () {
+                _refreshIndicatorKeyCup.currentState.show();
+              }
+          )
+      ));
+    });
   }
 
   requestPermissions(List<Permission> permissionList) async {
@@ -364,7 +402,6 @@ class _MyHomePageState extends State<MyHomePage>
         appBar: new AppBar(
           bottom: !_canReadSMS ? null : new TabBar(
             tabs: tabsHeader, controller: tabController,),
-//          title: new Text(widget.title),
           title: AppBarTitle(
             title: widget.title,
             filterCtrl: filterCtrl,
@@ -372,11 +409,6 @@ class _MyHomePageState extends State<MyHomePage>
             searchOperation: _searchOperation,
           ),
           actions: [
-            // TODO: Funcionalidad Filtrar listas, al escribir goTop de la lista
-//            new IconButton(
-//              icon: Icon(_isSearch ? Icons.close : Icons.search),
-//              onPressed: _toggleSearch,
-//            ),
             tabController.index != 0
                 ? new IconButton(
               icon: Icon(_isSearch ? Icons.close : Icons.search),
@@ -505,18 +537,28 @@ class _MyHomePageState extends State<MyHomePage>
 
     // TAB CUP / CUC
     if (_operacionesCUP.isNotEmpty) {
-      tempListContents.add(OperationList(
-        operaciones: _filteredCUP,
-//        operaciones: _operacionesCUP,
-        stickyListController: _stickyScrollController,
-      ));
+      tempListContents.add(
+          new RefreshIndicator(
+            key: _refreshIndicatorKeyCup,
+            onRefresh: _handleRefresh,
+            child: new OperationList(
+              operaciones: _filteredCUP,
+    //        operaciones: _operacionesCUP,
+              stickyListController: _stickyScrollController,
+            ),
+          ));
     }
     if (_operacionesCUC.isNotEmpty) {
-      tempListContents.add(OperationList(
-        operaciones: _filteredCUC,
-//        operaciones: _operacionesCUC,
-        stickyListController: _stickyScrollController,
-      ));
+      tempListContents.add(
+          new RefreshIndicator(
+            key: _refreshIndicatorKeyCuc,
+            onRefresh: _handleRefresh,
+            child: new OperationList(
+              operaciones: _filteredCUC,
+    //        operaciones: _operacionesCUC,
+              stickyListController: _stickyScrollController,
+            ),
+          ));
     }
     return tempListContents;
   }
