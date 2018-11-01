@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
 import 'package:call_number/call_number.dart';
+import 'package:package_info/package_info.dart';
 import 'package:flutter/material.dart';
 //import 'package:http/http.dart' as http;
 
@@ -34,18 +33,37 @@ class MenuAppBar extends StatelessWidget {
     );
   }
 
+
+  Future _getPackageInfo() async {
+    return await PackageInfo.fromPlatform();
+  }
+
   Future<Null> _aboutDialog(BuildContext context) async {
+
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    String appName = packageInfo.appName;
+    String packageName = packageInfo.packageName;
+    String version = packageInfo.version;
+    String buildNumber = packageInfo.buildNumber;
+    String isBeta = version.substring(0,1)=='0' ? ' beta' : '';
+
     return showDialog<Null>(
       context: context,
       barrierDismissible: true, // user must NOT tap button!
       builder: (BuildContext context) {
         return new AlertDialog(
-          title: new Text('BanKDroid v0.0.3 beta'),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              new Text(appName),
+            ],
+          ),
           content: new SingleChildScrollView(
             child: new ListBody(
               children: [
-                new Text('Visor de Operaciones de Banco Metropolitano.\n'),
-                new Text('Ayúdenos a continuar desarrollando la aplicación.'),
+                new Text('Visor de Operaciones de Banco Metropolitano.'),
+//                new Text('Visor de Operaciones de Banco Metropolitano.\n'),
+//                new Text('Ayúdenos a continuar desarrollando la aplicación.'),
 //                FutureBuilder<JsonObject>(
 //                  future: fetchPost(),
 //                  builder: (context, snapshot) {
@@ -76,18 +94,24 @@ class MenuAppBar extends StatelessWidget {
             ),
           ),
           actions: [
+//            new Row(
+//              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//              children: [
+//                !canCall
+//                ? new FlatButton(
+//                  onPressed: requestPermissions,
+//                  child: new Text("Solicitar permisos", style: new TextStyle(color: Colors.blue),)
+//                  )
+//                : new FlatButton(
+//                  onPressed: () {_initCall("*234*1*52654732%23");},
+//                  child: new Text('Donar 30 centavos', style: new TextStyle(color: Colors.red),)
+//                  ),
+//              ],
+//            ),
             new Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                !canCall
-                ? new FlatButton(
-                  onPressed: requestPermissions,
-                  child: new Text("Solicitar permisos", style: new TextStyle(color: Colors.blue),)
-                  )
-                : new FlatButton(
-                  onPressed: () {_initCall("*234*1*52654732%23");},
-                  child: new Text('Donar 30 centavos', style: new TextStyle(color: Colors.red),)
-                  ),
+                new Text('version ' + version + isBeta),
               ],
             ),
           ],
