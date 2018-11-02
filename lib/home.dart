@@ -11,9 +11,8 @@ import 'ussd_methods.dart';
 import 'permisions.dart';
 
 // Views
-import 'home_tab.dart';
+import 'resume_tab.dart';
 import 'menu_app_bar_button.dart';
-import 'bottom_app_bar.dart';
 import 'operation_list.dart';
 
 // External packages
@@ -22,7 +21,7 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 
 // Plugins
-//import 'package:permission/permission.dart';
+import 'package:unicorndial/unicorndial.dart';
 import 'package:simple_permissions/simple_permissions.dart';
 import 'package:sms/sms.dart';
 
@@ -288,18 +287,37 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   }
 
   void _initScrollListener() {
-    _hideButtonController.addListener(() {
-      if (_hideButtonController.position.userScrollDirection ==
-          ScrollDirection.reverse) {
-        setState(() {
-          _isFABButtonVisible = false;
-        });
+    _stickyScrollController.addListener(() {
+      if (_stickyScrollController.position.userScrollDirection == ScrollDirection.reverse) {
+        if(_isFABButtonVisible){
+          setState(() {
+            _isFABButtonVisible = false;
+          });
+        }
       }
-      if (_hideButtonController.position.userScrollDirection ==
-          ScrollDirection.forward) {
-        setState(() {
-          _isFABButtonVisible = true;
-        });
+      if (_stickyScrollController.position.userScrollDirection == ScrollDirection.forward) {
+        if(!_isFABButtonVisible){
+          setState(() {
+            _isFABButtonVisible = true;
+          });
+        }
+      }
+    });
+
+    _hideButtonController.addListener(() {
+      if (_hideButtonController.position.userScrollDirection == ScrollDirection.reverse) {
+        if(_isFABButtonVisible){
+          setState(() {
+            _isFABButtonVisible = false;
+          });
+        }
+      }
+      if (_hideButtonController.position.userScrollDirection == ScrollDirection.forward) {
+        if(!_isFABButtonVisible){
+          setState(() {
+            _isFABButtonVisible = true;
+          });
+        }
       }
     });
   }
@@ -396,6 +414,38 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     List<Widget> tabsHeader = getTabsHeaders();
     List<Widget> tabsContent = getTabsContents();
 
+    var childButtons = List<UnicornButton>();
+    childButtons.add(UnicornButton(
+//        hasLabel: true,
+//        labelText: _conected ? "Desconectar" : "Conectar",
+        currentButton: FloatingActionButton(
+          heroTag: "train",
+          tooltip: _conected ? "Desconectar" : "Conectar",
+          backgroundColor: _conected ? Colors.lightGreen : Colors.blue,
+          mini: true,
+          child: _conected ? Icon(Icons.close) : Icon(Icons.vpn_key),
+          onPressed: _toggleConect,
+        )));
+    childButtons.add(
+        UnicornButton(
+        currentButton: FloatingActionButton(
+          heroTag: "airplane",
+          tooltip: "Consultar Saldo",
+          backgroundColor: !_conected ? Colors.grey : Colors.blueAccent,
+          mini: true,
+          child: Icon(Icons.attach_money),
+          onPressed: !_conected ? null : callSaldo,
+        )));
+    childButtons.add(UnicornButton(
+        currentButton: FloatingActionButton(
+          heroTag: "directions",
+          tooltip: "Ultimas Operaciones",
+          backgroundColor: !_conected ? Colors.grey : Colors.blueAccent,
+          mini: true,
+          child: Icon(Icons.list),
+          onPressed: !_conected ? null : callUltimasOperaciones,
+        )));
+
     return new DefaultTabController(
       length: 3,
       child: new Scaffold(
@@ -454,23 +504,12 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
             : TabBarView(children: tabsContent, controller: tabController,),
         floatingActionButton: !_canReadSMS || !_isFABButtonVisible
             ? null
-            : FloatingActionButton(
-          elevation: 2.0,
-          onPressed: _loading ? null : _toggleConect,
-          child: _conected
-              ? new Icon(Icons.phonelink_erase)
-              : new Icon(Icons.speaker_phone),
-          backgroundColor: _loading
-              ? Colors.grey
-              : _conected ? Colors.lightGreen : Colors.blue,
-          tooltip: _conected ? "Desconectar" : "Conectar",
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: !_isFABButtonVisible
-            ? null
-            : BottomAppBarWidget(
-          disable: !_conected,
-        ),
+            : new UnicornDialer(
+            backgroundColor: Color.fromRGBO(255, 255, 255, 0.6),
+//            parentButtonBackground: Colors.redAccent,
+            orientation: UnicornOrientation.VERTICAL,
+            parentButton: Icon(Icons.add),
+            childButtons: childButtons),
       ),
     );
   }
@@ -590,11 +629,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     else {
       setState(() {
         _stickyScrollController.jumpTo(0.0);
-//        _filteredCUP.addAll(_operacionesCUP
-//            .where((op) => getOperationTitle(op.tipoOperacion).toLowerCase().contains(filter.toLowerCase())).toList());
-//
-//        _filteredCUC.addAll(_operacionesCUC
-//            .where((op) => getOperationTitle(op.tipoOperacion).toLowerCase().contains(filter.toLowerCase())).toList());
         _filteredCUP.addAll(filterOperations(_operacionesCUP));
         _filteredCUC.addAll(filterOperations(_operacionesCUC));
       });
