@@ -42,8 +42,10 @@ const Color kDefaultIconColor = Colors.grey;
 
 
 enum TipoSms{
+  CONSULTAR_ALL_ACCOUNTS,
   CONSULTAR_SALDO,
   CONSULTAR_SALDO_ERROR,
+  RECARGA_MOVIL,
   TRANSFERENCIA_TX_SALDO,
   TRANSFERENCIA_RX_SALDO,
   TRANSFERENCIA_FALLIDA,
@@ -64,11 +66,14 @@ enum TipoSms{
 
 enum TipoOperacion{
   SALARIO,
+  DESCUENTO_NOMINA,
   JUBILACION,
   INTERES,
   SALDO,
   ATM,
   TRANSFERENCIA,
+  RECARGA_MOVIL,
+  OP_VENTANILLA,
   ELECTRICIDAD,
   TELEFONO,
   AGUA,
@@ -98,9 +103,12 @@ IconData getIconData(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.AGUA ? Icons.opacity
       : tipoOperacion == TipoOperacion.INTERES ? Icons.payment
       : tipoOperacion == TipoOperacion.TRANSFERENCIA ? Icons.compare_arrows
+      : tipoOperacion == TipoOperacion.RECARGA_MOVIL ? Icons.phone_android
+      : tipoOperacion == TipoOperacion.OP_VENTANILLA ? Icons.account_balance
       : tipoOperacion == TipoOperacion.POS ? Icons.shopping_cart
       : tipoOperacion == TipoOperacion.SALARIO ? Icons.work
       : tipoOperacion == TipoOperacion.JUBILACION ? Icons.work
+      : tipoOperacion == TipoOperacion.DESCUENTO_NOMINA ? Icons.work
       : tipoOperacion == TipoOperacion.MULTA ? Icons.assignment
       : tipoOperacion == TipoOperacion.AJUSTE ? Icons.exposure
       : tipoOperacion == TipoOperacion.MISSING ? Icons.broken_image
@@ -118,9 +126,12 @@ String getOperationTitle(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.ELECTRICIDAD ? "Factura Electrica"
       : tipoOperacion == TipoOperacion.INTERES ? "Intereses"
       : tipoOperacion == TipoOperacion.TRANSFERENCIA ? "Transferencia"
+      : tipoOperacion == TipoOperacion.RECARGA_MOVIL ? "Recarga Movil"
+      : tipoOperacion == TipoOperacion.OP_VENTANILLA ? "Op. Ventanilla"
       : tipoOperacion == TipoOperacion.POS ? "POS"
       : tipoOperacion == TipoOperacion.SALARIO ? "Salario"
       : tipoOperacion == TipoOperacion.JUBILACION ? "Jubilacion"
+      : tipoOperacion == TipoOperacion.DESCUENTO_NOMINA ? "Descuento Nómina"
       : tipoOperacion == TipoOperacion.MULTA ? "Multa"
       : tipoOperacion == TipoOperacion.AJUSTE ? "Ajuste"
       : "Desconocido";

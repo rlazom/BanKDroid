@@ -45,6 +45,14 @@ class OperationListProvider {
       operations..addAll(operationsSMS);
     });
 
+    List<Operation> operationsRecargaUltOps = operations.where((o) => o.tipoOperacion == TipoOperacion.RECARGA_MOVIL && o.tipoSms == TipoSms.ULTIMAS_OPERACIONES).toList();
+    operations.where((o) => o.tipoOperacion == TipoOperacion.RECARGA_MOVIL && o.tipoSms != TipoSms.ULTIMAS_OPERACIONES).toList().forEach((op) {
+      if (operationsRecargaUltOps.any((p) => p.idOperacion == op.idOperacion)) {
+        op.moneda = operationsRecargaUltOps.firstWhere((p) => p.idOperacion == op.idOperacion).moneda;
+        op.importe = op.moneda == MONEDA.CUC ? op.importe : op.importe * 25.0;
+      }
+    });
+
     // Arreglando los mensajes de transferencia recivida en cuenta CUC con importe en CUP
     operations.where((op) => op.observaciones != "")
         .where((op) => op.tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO && (op.observaciones.split(" ")[1].substring(0,4) == '9202' || op.observaciones.split(" ")[1].substring(0,4) == '9200') && op.fullText.indexOf('CUC') < 0)
@@ -128,10 +136,10 @@ class OperationListProvider {
 
         operation.idOperacion = (items[5].trim()).split(" ")[0].trim();
         operation.fecha = date;
-        operation.tipoOperacion = getTipoOperacion(items[1].trim() + ' ' + items[5].trim().split(" ")[0].trim());
+        operation.importe = double.parse(items[3].trim());
+        operation.tipoOperacion = getTipoOperacion(items[1].trim() + ' ' + items[5].trim().split(" ")[0].trim(), operation.importe);
         operation.naturaleza = getNaturalezaOperacion(items[2].trim());
         operation.moneda = getMoneda(items[4].trim());
-        operation.importe = double.parse(items[3].trim());
 
         list.add(operation);
       }
@@ -146,6 +154,23 @@ class OperationListProvider {
       operation.isSaldoReal = true;
       operation.fullText = message.body.trim();
       list.add(operation);
+    } else if (tipoSms == TipoSms.RECARGA_MOVIL) {
+      Operation operation = new Operation();
+      operation.idOperacion = lines[0].split(". ")[4].split(": ")[1].toString();
+      operation.tipoOperacion = TipoOperacion.RECARGA_MOVIL;
+      operation.tipoSms = TipoSms.RECARGA_MOVIL;
+      operation.fecha = message.date;
+      operation.moneda = null;
+      operation.importe = double.parse(lines[0].split(". ")[2].split(": ")[1].split(" ")[0].trim()).abs();
+      operation.saldo = double.parse(lines[0].split(". ")[5].split(": ")[1].trim()).abs();
+      operation.isSaldoReal = true;
+      var phoneTemp = lines[0].split(". ")[3].split(": ")[1].trim();
+      if(phoneTemp.length == 8){
+        phoneTemp = '+53' + phoneTemp;
+      }
+      operation.observaciones = "Movil: " + phoneTemp;
+      operation.fullText = message.body.trim();
+      list.add(operation);
     } else if (tipoSms == TipoSms.FACTURA_PAGADA ||
         tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO ||
         tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
@@ -158,11 +183,11 @@ class OperationListProvider {
         operation.idOperacion = lines[3].trim().split(" ")[2].trim();
         var factura = lines[1].trim().split(": ")[1].trim();
         operation.observaciones = "Factura: " + factura;
-        operation.tipoOperacion = getTipoOperacion(lines[0]);
+        operation.importe = double.parse(lines[2].trim().split(" ")[2].trim());
+        operation.tipoOperacion = getTipoOperacion(lines[0], operation.importe);
         operation.tipoSms = TipoSms.FACTURA_PAGADA;
         operation.naturaleza = NaturalezaOperacion.DEBITO;
         operation.moneda = getMoneda(lines[2].trim().split(" ")[3].trim());
-        operation.importe = double.parse(lines[2].trim().split(" ")[2].trim());
         operation.saldo = double.parse(lines[4].trim().split(" ")[3].trim());
         operation.isSaldoReal = true;
       } else if (tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO) {
@@ -268,7 +293,7 @@ class OperationListProvider {
   }
 
   static TipoSms getTipoSms(SmsMessage message) {
-    if (message.body.contains("La consulta de saldo"))
+    if (message.body.contains("La consulta de saldo") && message.body.contains("Saldo Contable"))
       return TipoSms.CONSULTAR_SALDO;
     else if (message.body.contains("Fallo la consulta de saldo"))
       return TipoSms.CONSULTAR_SALDO_ERROR;
@@ -302,6 +327,10 @@ class OperationListProvider {
       return TipoSms.ERROR_ULTIMAS_OPERACIONES;
     else if (message.body.contains("Banco Metropolitano Ultimas operaciones"))
       return TipoSms.ULTIMAS_OPERACIONES;
+    else if (message.body.contains("La consulta de saldo") && message.body.contains("Nombre Cuenta"))
+      return TipoSms.CONSULTAR_ALL_ACCOUNTS;
+    else if (message.body.contains("La recarga se realizo con exito"))
+      return TipoSms.RECARGA_MOVIL;
     else
       return TipoSms.DEFAULT;
   }
@@ -320,7 +349,7 @@ class OperationListProvider {
         || tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO);
   }
 
-  static TipoOperacion getTipoOperacion(String cadena) {
+  static TipoOperacion getTipoOperacion(String cadena, double importe) {
     String idOperacion = cadena.split(" ")[0];
     String idTransaccion = cadena.split(" ")[1].substring(0,2);
     
@@ -332,6 +361,8 @@ class OperationListProvider {
         tipoServicio = TipoOperacion.TELEFONO;
       else if (idOperacion == "ELECT" || cadena.contains("electricidad"))
         tipoServicio = TipoOperacion.ELECTRICIDAD;
+      else if (idOperacion == "RECA" || cadena.contains("recarga"))
+        tipoServicio = TipoOperacion.RECARGA_MOVIL;
       else if (idOperacion == "UU")
         tipoServicio = TipoOperacion.AJUSTE;
       else if (idOperacion == "YY" && idTransaccion == "YY")    // TRANSFERENCIA ATM
@@ -340,8 +371,12 @@ class OperationListProvider {
         tipoServicio = TipoOperacion.TRANSFERENCIA;
       else if (idOperacion == "MULT" && idTransaccion == "YY")
         tipoServicio = TipoOperacion.MULTA;
-      else if (idOperacion == "EV")
+      else if (idOperacion == "EV" && importe >= 0.00)
         tipoServicio = TipoOperacion.SALARIO;
+      else if (idOperacion == "EV" && importe < 0.00)
+        tipoServicio = TipoOperacion.DESCUENTO_NOMINA;
+      else if (idOperacion == "TL")
+        tipoServicio = TipoOperacion.OP_VENTANILLA;
       else if (idOperacion == "EB")
         tipoServicio = TipoOperacion.JUBILACION;
       else if (idOperacion == "IO")

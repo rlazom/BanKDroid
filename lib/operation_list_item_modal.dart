@@ -127,6 +127,7 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
     String chipText = obsContent;
     String chipCurrencyText = '';
     bool esTransf = false;
+    bool esRecarga = false;
     Uint8List thumbnail = null;
 
     // Adding Chip Row:: Loading Contacts Data
@@ -145,6 +146,9 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
         operation.tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
       chipCurrencyText = esCUC ? getMonedaStr(MONEDA.CUC) : getMonedaStr(MONEDA.CUP);
       esTransf = true;
+    }
+    if (operation.tipoSms == TipoSms.RECARGA_MOVIL) {
+      esRecarga = true;
     }
 
     List<Widget> chipRowElements = new List<Widget>();
@@ -176,7 +180,7 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
               ? chipText == obsContent
                 ? new Icon(Icons.person_add, size: 18.0, color: Colors.white70,)
                 : new Text(chipText.substring(0,1), style: TextStyle(fontSize: 16.0, color: Colors.grey,),)
-              : new Icon(Icons.confirmation_number, size: 18.0, color: Colors.white70,),
+              : esRecarga ? new Icon(Icons.phone_android, size: 18.0, color: Colors.white70,) : new Icon(Icons.confirmation_number, size: 18.0, color: Colors.white70,),
           ),
         ),
       )// CircleButton para agregar numero de tarjeta a Contactos o Inicial del Nombre del Contacto
@@ -261,6 +265,10 @@ Future getContactName(Operation operation) async {
   if (operation.observaciones.length > 0) {
     var obsArr = operation.observaciones.split(" ");
     String obsContent = obsArr[1];
+
+    if(operation.tipoOperacion == TipoOperacion.RECARGA_MOVIL && obsContent.length == 8){
+      obsContent = '+53' + obsContent;
+    }
 
     ContactQuery contacts = new ContactQuery();
     Contact contact = await contacts.queryContact(obsContent);
