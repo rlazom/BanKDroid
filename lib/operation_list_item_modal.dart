@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:bankdroid/phoneContact.dart';
 import 'package:flutter/services.dart';
 
 import 'package:simple_permissions/simple_permissions.dart';
-import 'package:sms/contact.dart';
+//import 'package:sms/contact.dart';
 //import 'package:contacts_service/contacts_service.dart';
 
 import 'permisions.dart';
@@ -134,12 +135,12 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
     var readContactsPermissionStatus = await getPermission(Permission.ReadContacts);
     var writeContactsPermissionStatus = await getPermission(Permission.WriteContacts);
     if (readContactsPermissionStatus == PermissionStatus.authorized) {
-      Contact contact = await getContactName(operation);
 
-      chipText = contact.fullName != null ? contact.fullName : obsContent;
-      thumbnail = contact.thumbnail != null ? contact.thumbnail.bytes : null;
-//      chipText = contact.displayName != null ? contact.displayName : obsContent;
-//      thumbnail = contact.avatar != null ? contact.avatar : null;
+      String phone = operation.observaciones.split(" ")[1];
+      PhoneContact contact = await _findContactByPhone(phone, readContactsPermissionStatus);
+
+      chipText = contact.name != null ? contact.name : obsContent;
+      thumbnail = contact.bytes != null ? contact.bytes : null;
     }
 
     if (operation.tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO ||
@@ -172,15 +173,15 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
       : new Padding(    // CircleButton para agregar numero de tarjeta a Contactos o Inicial del Nombre del Contacto
         padding: const EdgeInsets.only(top: 5.0, bottom: 5.0, right: 5.0),
         child: new GestureDetector(
-          onTap: (){ chipText != obsContent ? null : _createOrEditContact(obsContent, chipCurrencyText, writeContactsPermissionStatus);},
+          onTap: (){ chipText != obsContent ? null : _createOrEditContact(obsContent, esTransf ? chipCurrencyText : 'Movil', writeContactsPermissionStatus);},
           child: new CircleAvatar(
             maxRadius: 15.0,
             backgroundColor: Colors.grey.shade800,
-            child: esTransf
+            child: (esTransf || esRecarga)
               ? chipText == obsContent
                 ? new Icon(Icons.person_add, size: 18.0, color: Colors.white70,)
                 : new Text(chipText.substring(0,1), style: TextStyle(fontSize: 16.0, color: Colors.grey,),)
-              : esRecarga ? new Icon(Icons.phone_android, size: 18.0, color: Colors.white70,) : new Icon(Icons.confirmation_number, size: 18.0, color: Colors.white70,),
+              : new Icon(Icons.confirmation_number, size: 18.0, color: Colors.white70,),
           ),
         ),
       )// CircleButton para agregar numero de tarjeta a Contactos o Inicial del Nombre del Contacto
@@ -261,30 +262,35 @@ void _createOrEditContact(String pan, String pan_label, PermissionStatus writeCo
   }
 }
 
-Future getContactName(Operation operation) async {
-  if (operation.observaciones.length > 0) {
-    var obsArr = operation.observaciones.split(" ");
-    String obsContent = obsArr[1];
+Future _findContactByPhone(String phone, PermissionStatus readContactsPermissionStatus) async {
+  if (readContactsPermissionStatus == PermissionStatus.authorized) {
 
-    if(operation.tipoOperacion == TipoOperacion.RECARGA_MOVIL && obsContent.length == 8){
-      obsContent = '+53' + obsContent;
+    var arguments = <String, dynamic>{
+      'phone': phone,
+    };
+    var resultado = await CHANNEL.invokeMethod("findContactByPhone",arguments);
+    if(resultado == null){
+      return new PhoneContact();
     }
+    var resultadoArr = resultado.split('|');
 
-    ContactQuery contacts = new ContactQuery();
-    Contact contact = await contacts.queryContact(obsContent);
-    if (contact.fullName != null) {
-      print(contact.fullName);
-    }
+//    var contactId = resultadoArr[0].split(": ")[1].toString().trim();
+    var name = resultadoArr[1].split(": ")[1].toString().trim();
+    var label = resultadoArr[2].split(": ")[1].toString().trim();
+//    var photo_uri = resultadoArr[3].split(": ")[1].toString().trim();
+    var photo_thumbnail_uri = resultadoArr[4].split(": ")[1].toString().trim();
+
+    arguments = <String, dynamic>{
+      'photo_thumbnail_uri': photo_thumbnail_uri,
+    };
+    Uint8List bytes = await CHANNEL.invokeMethod("queryContactThumbnail",arguments);
+
+    PhoneContact contact = new PhoneContact(
+        name: name,
+        label: label,
+        bytes: bytes
+    );
+
     return contact;
-
-//    Iterable<Contact> contact = await ContactsService.getContacts(query : obsContent);
-//    Iterable<Contact> contact = await ContactsService.getContacts(query : 'Abuela');
-
-//    var allContacts = await ContactsService.getContacts();
-//    var filtered = allContacts.where((c) => c.phones.any((phone) => phone.value.contains(obsContent))).toList();
-//    if(filtered.length > 0){
-//      var contact = filtered.first;
-//      return contact;
-//    }
   }
 }
