@@ -45,10 +45,15 @@ class OperationListProvider {
       operations..addAll(operationsSMS);
     });
 
+    // Buscando la moneda de los mensajes de recarga
     List<Operation> operationsRecargaUltOps = operations.where((o) => o.tipoOperacion == TipoOperacion.RECARGA_MOVIL && o.tipoSms == TipoSms.ULTIMAS_OPERACIONES).toList();
     operations.where((o) => o.tipoOperacion == TipoOperacion.RECARGA_MOVIL && o.tipoSms != TipoSms.ULTIMAS_OPERACIONES).toList().forEach((op) {
       if (operationsRecargaUltOps.any((p) => p.idOperacion == op.idOperacion)) {
         op.moneda = operationsRecargaUltOps.firstWhere((p) => p.idOperacion == op.idOperacion).moneda;
+        op.importe = op.moneda == MONEDA.CUC ? op.importe : op.importe * 25.0;
+      }
+      else{
+        // ESTAMOS ASUMIENDO QUE LA MONEDA POR DEFECTO CUP FUE DE LA QUE SE EFECTUO LA RECARGA
         op.importe = op.moneda == MONEDA.CUC ? op.importe : op.importe * 25.0;
       }
     });
@@ -137,8 +142,8 @@ class OperationListProvider {
         operation.idOperacion = (items[5].trim()).split(" ")[0].trim();
         operation.fecha = date;
         operation.importe = double.parse(items[3].trim());
-        operation.tipoOperacion = getTipoOperacion(items[1].trim() + ' ' + items[5].trim().split(" ")[0].trim(), operation.importe);
         operation.naturaleza = getNaturalezaOperacion(items[2].trim());
+        operation.tipoOperacion = getTipoOperacion(items[1].trim() + ' ' + items[5].trim().split(" ")[0].trim(), operation.naturaleza);
         operation.moneda = getMoneda(items[4].trim());
 
         list.add(operation);
@@ -160,7 +165,7 @@ class OperationListProvider {
       operation.tipoOperacion = TipoOperacion.RECARGA_MOVIL;
       operation.tipoSms = TipoSms.RECARGA_MOVIL;
       operation.fecha = message.date;
-      operation.moneda = null;
+//      operation.moneda = null;
       operation.importe = double.parse(lines[0].split(". ")[2].split(": ")[1].split(" ")[0].trim()).abs();
       operation.saldo = double.parse(lines[0].split(". ")[5].split(": ")[1].trim()).abs();
       operation.isSaldoReal = true;
@@ -184,9 +189,9 @@ class OperationListProvider {
         var factura = lines[1].trim().split(": ")[1].trim();
         operation.observaciones = "Factura: " + factura;
         operation.importe = double.parse(lines[2].trim().split(" ")[2].trim());
-        operation.tipoOperacion = getTipoOperacion(lines[0], operation.importe);
-        operation.tipoSms = TipoSms.FACTURA_PAGADA;
         operation.naturaleza = NaturalezaOperacion.DEBITO;
+        operation.tipoOperacion = getTipoOperacion(lines[0], operation.naturaleza);
+        operation.tipoSms = TipoSms.FACTURA_PAGADA;
         operation.moneda = getMoneda(lines[2].trim().split(" ")[3].trim());
         operation.saldo = double.parse(lines[4].trim().split(" ")[3].trim());
         operation.isSaldoReal = true;
@@ -307,7 +312,7 @@ class OperationListProvider {
       return TipoSms.ERROR_FACTURA;
     else if (message.body.contains("  Factura: "))
       return TipoSms.FACTURA;
-    else if (message.body.contains("El pago de la factura"))
+    else if (message.body.contains("El pago de la factura") || message.body.contains("El pago parcial de la factura"))
       return TipoSms.FACTURA_PAGADA;
     else if (message.body.contains("Usted se ha autenticado en la plataforma"))
       return TipoSms.AUTENTICAR;
@@ -349,7 +354,7 @@ class OperationListProvider {
         || tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO);
   }
 
-  static TipoOperacion getTipoOperacion(String cadena, double importe) {
+  static TipoOperacion getTipoOperacion(String cadena, NaturalezaOperacion naturaleza) {
     String idOperacion = cadena.split(" ")[0];
     String idTransaccion = cadena.split(" ")[1].substring(0,2);
     
@@ -371,9 +376,9 @@ class OperationListProvider {
         tipoServicio = TipoOperacion.TRANSFERENCIA;
       else if (idOperacion == "MULT" && idTransaccion == "YY")
         tipoServicio = TipoOperacion.MULTA;
-      else if (idOperacion == "EV" && importe >= 0.00)
+      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.CREDITO)
         tipoServicio = TipoOperacion.SALARIO;
-      else if (idOperacion == "EV" && importe < 0.00)
+      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.DEBITO)
         tipoServicio = TipoOperacion.DESCUENTO_NOMINA;
       else if (idOperacion == "TL")
         tipoServicio = TipoOperacion.OP_VENTANILLA;

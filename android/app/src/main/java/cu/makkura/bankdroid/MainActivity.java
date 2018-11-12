@@ -139,9 +139,6 @@ public class MainActivity extends FlutterActivity {
         Log.i(TAG, "Search photo thumbnail by photo_thumbnail_uri: " + photo_thumbnail_uri);
 
         Uri photoUri = Uri.parse(photo_thumbnail_uri);
-        Log.i(TAG, "URI");
-        Log.i(TAG, photoUri.toString());
-
         Cursor cursor = getContentResolver().query(photoUri,
                 new String[] {ContactsContract.Contacts.Photo.PHOTO}, null, null, null);
         if (cursor == null) {
@@ -151,7 +148,6 @@ public class MainActivity extends FlutterActivity {
             if (cursor.moveToFirst()) {
                 byte[] data = cursor.getBlob(0);
                 if (data != null) {
-                    Log.i(TAG, "Llego aki");
                     return data;
 //                    return new ByteArrayInputStream(data);
                 }

@@ -28,7 +28,8 @@ class Operation{
   }
 
   @override
-  bool operator ==(other) => other is Operation && other.idOperacion + other.moneda.toString() == idOperacion + moneda.toString();
+  bool operator ==(other) => other is Operation && other.idOperacion + other.moneda.toString() + other.importe.toStringAsFixed(2) == idOperacion + moneda.toString() + importe.toStringAsFixed(2);
+//  bool operator ==(other) => other is Operation && other.idOperacion + other.moneda.toString() + other.naturaleza.toString() + other.importe.toStringAsFixed(2) == idOperacion + moneda.toString() + naturaleza.toString() + importe.toStringAsFixed(2);
 
   @override
   int get hashCode {

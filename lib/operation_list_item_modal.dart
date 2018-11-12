@@ -5,7 +5,7 @@ import 'package:bankdroid/phoneContact.dart';
 import 'package:flutter/services.dart';
 
 import 'package:simple_permissions/simple_permissions.dart';
-//import 'package:sms/contact.dart';
+import 'package:sms/contact.dart';
 //import 'package:contacts_service/contacts_service.dart';
 
 import 'permisions.dart';
@@ -50,6 +50,7 @@ Future showOperationModal(BuildContext context, Operation operation) async {
             ],
           ),
           content: new ListView(
+            physics: NeverScrollableScrollPhysics(),
             shrinkWrap: true,
             children: listModalContentElements,
           ),
@@ -122,13 +123,10 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
     String obsContent = obsArr[1];
     bool esCUC = (obsContent.substring(0, 4) == '9202' || obsContent.substring(0, 4) == '9200');
 
-    // Adding Chip Operation Title
-    listModalContentElements.add(new Text(obsTitle));
-
     String chipText = obsContent;
     String chipCurrencyText = '';
     bool esTransf = false;
-    bool esRecarga = false;
+    String label = null;
     Uint8List thumbnail = null;
 
     // Adding Chip Row:: Loading Contacts Data
@@ -140,6 +138,7 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
       PhoneContact contact = await _findContactByPhone(phone, readContactsPermissionStatus);
 
       chipText = contact.name != null ? contact.name : obsContent;
+      label = (contact.label != null) ? contact.label : null;
       thumbnail = contact.bytes != null ? contact.bytes : null;
     }
 
@@ -149,8 +148,32 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
       esTransf = true;
     }
     if (operation.tipoSms == TipoSms.RECARGA_MOVIL) {
-      esRecarga = true;
+      chipCurrencyText = 'Movil';
     }
+    if (operation.tipoOperacion == TipoOperacion.ELECTRICIDAD) {
+      chipCurrencyText = 'Fact. Electrica';
+    }
+    if (operation.tipoOperacion == TipoOperacion.TELEFONO) {
+      chipCurrencyText = 'Fact. Telefónica';
+    }
+    if (operation.tipoOperacion == TipoOperacion.AGUA) {
+      chipCurrencyText = 'Fact. Agua';
+    }
+    if((esTransf && label == chipCurrencyText) || !esTransf){
+      label = null;
+    }
+
+    // Adding Chip Operation Title
+    listModalContentElements.add(Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        new Text(obsTitle),
+        new Text(label ?? '', style: new TextStyle(
+          color: Colors.grey,
+          fontSize: 12.0,
+        ),),
+      ],
+    ));
 
     List<Widget> chipRowElements = new List<Widget>();
 
@@ -173,15 +196,13 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
       : new Padding(    // CircleButton para agregar numero de tarjeta a Contactos o Inicial del Nombre del Contacto
         padding: const EdgeInsets.only(top: 5.0, bottom: 5.0, right: 5.0),
         child: new GestureDetector(
-          onTap: (){ chipText != obsContent ? null : _createOrEditContact(obsContent, esTransf ? chipCurrencyText : 'Movil', writeContactsPermissionStatus);},
+          onTap: (){ chipText != obsContent ? null : _createOrEditContact(obsContent, chipCurrencyText, writeContactsPermissionStatus);},
           child: new CircleAvatar(
             maxRadius: 15.0,
             backgroundColor: Colors.grey.shade800,
-            child: (esTransf || esRecarga)
-              ? chipText == obsContent
+            child: chipText == obsContent
                 ? new Icon(Icons.person_add, size: 18.0, color: Colors.white70,)
-                : new Text(chipText.substring(0,1), style: TextStyle(fontSize: 16.0, color: Colors.grey,),)
-              : new Icon(Icons.confirmation_number, size: 18.0, color: Colors.white70,),
+                : new Text(chipText.substring(0,1), style: TextStyle(fontSize: 16.0, color: Colors.grey,),),
           ),
         ),
       )// CircleButton para agregar numero de tarjeta a Contactos o Inicial del Nombre del Contacto
@@ -265,12 +286,44 @@ void _createOrEditContact(String pan, String pan_label, PermissionStatus writeCo
 Future _findContactByPhone(String phone, PermissionStatus readContactsPermissionStatus) async {
   if (readContactsPermissionStatus == PermissionStatus.authorized) {
 
+    // Search Contact Info by phone number
     var arguments = <String, dynamic>{
       'phone': phone,
     };
     var resultado = await CHANNEL.invokeMethod("findContactByPhone",arguments);
     if(resultado == null){
-      return new PhoneContact();
+      // Si no aparece en los contactos lo busco en el Profile
+
+      // Obtengo el Profile
+      UserProfileProvider provider = new UserProfileProvider();
+      UserProfile profile = await provider.getUserProfile();
+      print(profile.fullName);
+
+      if (profile == null){
+        return new PhoneContact();
+      }
+
+      // Busco el numero en el Profile
+      var labelFound = "";
+      for (var index = 0; index < profile.addresses.length; ++index) {
+        var addressArr = profile.addresses[index].split(": ");
+        var labelTemp = addressArr[0];
+        var numberTemp = addressArr[1].split(" ").join();
+        if (numberTemp == phone) {
+          labelFound = labelTemp == "null" ? null : labelTemp;
+          break;
+        }
+      }
+
+      if (labelFound == ""){
+        return new PhoneContact();
+      }
+      PhoneContact contact = new PhoneContact(
+          name: "Yo",
+          label: labelFound == "null" ? "" : labelFound,
+          bytes: profile.thumbnail == null ? null : profile.thumbnail.bytes
+      );
+      return contact;
     }
     var resultadoArr = resultado.split('|');
 
@@ -280,6 +333,7 @@ Future _findContactByPhone(String phone, PermissionStatus readContactsPermission
 //    var photo_uri = resultadoArr[3].split(": ")[1].toString().trim();
     var photo_thumbnail_uri = resultadoArr[4].split(": ")[1].toString().trim();
 
+    // Search Contact thumbnail by thumbnail uri
     arguments = <String, dynamic>{
       'photo_thumbnail_uri': photo_thumbnail_uri,
     };
