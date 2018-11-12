@@ -305,22 +305,18 @@ Future _findContactByPhone(String phone, PermissionStatus readContactsPermission
 
       // Busco el numero en el Profile
       var labelFound = "";
-      for (var index = 0; index < profile.addresses.length; ++index) {
-        var addressArr = profile.addresses[index].split(": ");
-        var labelTemp = addressArr[0];
-        var numberTemp = addressArr[1].split(" ").join();
-        if (numberTemp == phone) {
-          labelFound = labelTemp == "null" ? null : labelTemp;
-          break;
+      profile.addresses.forEach((label,value) {
+        if (value.toString().split(" ").join() == phone) {
+          labelFound = label.toString().substring(0,5) == "label" ? null : label;
         }
-      }
+      });
 
       if (labelFound == ""){
         return new PhoneContact();
       }
       PhoneContact contact = new PhoneContact(
           name: "Yo",
-          label: labelFound == "null" ? "" : labelFound,
+          label: labelFound,
           bytes: profile.thumbnail == null ? null : profile.thumbnail.bytes
       );
       return contact;
