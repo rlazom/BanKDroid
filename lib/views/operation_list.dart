@@ -3,8 +3,8 @@ import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:sticky_header_list/sticky_header_list.dart';
 
-import 'operation_list_item.dart';
-import 'operation.dart';
+import 'package:bankdroid/views/operation_list_item.dart';
+import 'package:bankdroid/models/operation.dart';
 
 const Color monthTileBackground = Colors.white;
 

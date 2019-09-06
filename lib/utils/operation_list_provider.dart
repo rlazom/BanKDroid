@@ -1,10 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'resumen.dart';
-import 'operation.dart';
-
 import 'dart:async';
 import 'package:sms/sms.dart';
+
+import '../models/resumen.dart';
+import '../models/operation.dart';
+import 'enums.dart';
 
 class OperationListProvider {
   double saldoCUP;
@@ -121,30 +121,30 @@ class OperationListProvider {
       for (int i = 2; i < lines.length - 1; i++) {
         if (lines[i].contains("INFO:")) continue;
 
-        Operation operation = new Operation();
-        operation.tipoSms = TipoSms.ULTIMAS_OPERACIONES;
-
         if(lines[i].trim()=="")
           continue;
 
-        var items = lines[i].split(";");
-        String dateStr = items[0].trim();
-
-        var parts = dateStr.split('/');
-
-        DateTime date = new DateTime(int.parse(parts.elementAt(2)),
-            int.parse(parts.elementAt(1)), int.parse(parts.elementAt(0)));
-
-        if (date.isAfter(smsDate)) {
-          date = smsDate;
-        }
-
-        operation.idOperacion = (items[5].trim()).split(" ")[0].trim();
-        operation.fecha = date;
-        operation.importe = double.parse(items[3].trim());
-        operation.naturaleza = getNaturalezaOperacion(items[2].trim());
-        operation.tipoOperacion = getTipoOperacion(items[1].trim() + ' ' + items[5].trim().split(" ")[0].trim(), operation.naturaleza);
-        operation.moneda = getMoneda(items[4].trim());
+        Operation operation = Operation().OperationFromSms(TipoSms.ULTIMAS_OPERACIONES, smsDate, message.body.trim());
+//        Operation operation = new Operation();
+//        operation.tipoSms = TipoSms.ULTIMAS_OPERACIONES;
+//
+//        var items = lines[i].split(";");
+//        String dateStr = items[0].trim();
+//        var parts = dateStr.split('/');
+//
+//        DateTime date = new DateTime(int.parse(parts.elementAt(2)),
+//            int.parse(parts.elementAt(1)), int.parse(parts.elementAt(0)));
+//
+//        if (date.isAfter(smsDate)) {
+//          date = smsDate;
+//        }
+//
+//        operation.idOperacion = (items[5].trim()).split(" ")[0].trim();
+//        operation.fecha = date;
+//        operation.importe = double.parse(items[3].trim());
+//        operation.naturaleza = getNaturalezaOperacion(items[2].trim());
+//        operation.tipoOperacion = getTipoOperacion(items[1].trim() + ' ' + items[5].trim().split(" ")[0].trim(), operation.naturaleza);
+//        operation.moneda = getMoneda(items[4].trim());
 
         list.add(operation);
       }
@@ -165,9 +165,8 @@ class OperationListProvider {
       operation.tipoOperacion = TipoOperacion.RECARGA_MOVIL;
       operation.tipoSms = TipoSms.RECARGA_MOVIL;
       operation.fecha = message.date;
-//      operation.moneda = null;
       operation.importe = double.parse(lines[0].split(". ")[2].split(": ")[1].split(" ")[0].trim()).abs();
-      operation.saldo = double.parse(lines[0].split(". ")[5].split(": ")[1].trim()).abs();
+      operation.saldo = double.parse(lines[0].split(". ")[5].split(": ")[1].trim().replaceAll('CR ','')).abs();
       operation.isSaldoReal = true;
       var phoneTemp = lines[0].split(". ")[3].split(": ")[1].trim();
       if(phoneTemp.length == 8){
@@ -354,61 +353,61 @@ class OperationListProvider {
         || tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO);
   }
 
-  static TipoOperacion getTipoOperacion(String cadena, NaturalezaOperacion naturaleza) {
-    String idOperacion = cadena.split(" ")[0];
-    String idTransaccion = cadena.split(" ")[1].substring(0,2);
-    
-    TipoOperacion tipoServicio = TipoOperacion.DEFAULT;
-    if (cadena != null) {
-      if (idOperacion == "AY")
-        tipoServicio = TipoOperacion.ATM;
-      else if (idOperacion == "TELF" || cadena.contains("telef"))
-        tipoServicio = TipoOperacion.TELEFONO;
-      else if (idOperacion == "ELECT" || cadena.contains("electricidad"))
-        tipoServicio = TipoOperacion.ELECTRICIDAD;
-      else if (idOperacion == "RECA" || cadena.contains("recarga"))
-        tipoServicio = TipoOperacion.RECARGA_MOVIL;
-      else if (idOperacion == "UU")
-        tipoServicio = TipoOperacion.AJUSTE;
-      else if (idOperacion == "YY" && idTransaccion == "YY")    // TRANSFERENCIA ATM
-        tipoServicio = TipoOperacion.TRANSFERENCIA;
-      else if (idOperacion == "TRAN" && idTransaccion == "MM")  // TRANSFERENCIA MOVIL
-        tipoServicio = TipoOperacion.TRANSFERENCIA;
-      else if (idOperacion == "MULT" && idTransaccion == "YY")
-        tipoServicio = TipoOperacion.MULTA;
-      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.CREDITO)
-        tipoServicio = TipoOperacion.SALARIO;
-      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.DEBITO)
-        tipoServicio = TipoOperacion.DESCUENTO_NOMINA;
-      else if (idOperacion == "TL")
-        tipoServicio = TipoOperacion.OP_VENTANILLA;
-      else if (idOperacion == "EB")
-        tipoServicio = TipoOperacion.JUBILACION;
-      else if (idOperacion == "IO")
-        tipoServicio = TipoOperacion.INTERES;
-      else if (idOperacion == "AP")
-        tipoServicio = TipoOperacion.POS;
-    }
-    return tipoServicio;
-  }
+//  static TipoOperacion getTipoOperacion(String cadena, NaturalezaOperacion naturaleza) {
+//    String idOperacion = cadena.split(" ")[0];
+//    String idTransaccion = cadena.split(" ")[1].substring(0,2);
+//
+//    TipoOperacion tipoServicio = TipoOperacion.DEFAULT;
+//    if (cadena != null) {
+//      if (idOperacion == "AY")
+//        tipoServicio = TipoOperacion.ATM;
+//      else if (idOperacion == "TELF" || cadena.contains("telef"))
+//        tipoServicio = TipoOperacion.TELEFONO;
+//      else if (idOperacion == "ELECT" || cadena.contains("electricidad"))
+//        tipoServicio = TipoOperacion.ELECTRICIDAD;
+//      else if (idOperacion == "RECA" || cadena.contains("recarga"))
+//        tipoServicio = TipoOperacion.RECARGA_MOVIL;
+//      else if (idOperacion == "UU")
+//        tipoServicio = TipoOperacion.AJUSTE;
+//      else if (idOperacion == "YY" && idTransaccion == "YY")    // TRANSFERENCIA ATM
+//        tipoServicio = TipoOperacion.TRANSFERENCIA;
+//      else if (idOperacion == "TRAN" && idTransaccion == "MM")  // TRANSFERENCIA MOVIL
+//        tipoServicio = TipoOperacion.TRANSFERENCIA;
+//      else if (idOperacion == "MULT" && idTransaccion == "YY")
+//        tipoServicio = TipoOperacion.MULTA;
+//      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.CREDITO)
+//        tipoServicio = TipoOperacion.SALARIO;
+//      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.DEBITO)
+//        tipoServicio = TipoOperacion.DESCUENTO_NOMINA;
+//      else if (idOperacion == "TL")
+//        tipoServicio = TipoOperacion.OP_VENTANILLA;
+//      else if (idOperacion == "EB")
+//        tipoServicio = TipoOperacion.JUBILACION;
+//      else if (idOperacion == "IO")
+//        tipoServicio = TipoOperacion.INTERES;
+//      else if (idOperacion == "AP")
+//        tipoServicio = TipoOperacion.POS;
+//    }
+//    return tipoServicio;
+//  }
 
-  static NaturalezaOperacion getNaturalezaOperacion(String cadena) {
-    NaturalezaOperacion naturalezaOperacion = NaturalezaOperacion.DEBITO;
-    if (cadena != null) {
-      if (cadena.contains("CR"))
-        naturalezaOperacion = NaturalezaOperacion.CREDITO;
-    }
-    return naturalezaOperacion;
-  }
+//  static NaturalezaOperacion getNaturalezaOperacion(String cadena) {
+//    NaturalezaOperacion naturalezaOperacion = NaturalezaOperacion.DEBITO;
+//    if (cadena != null) {
+//      if (cadena.contains("CR"))
+//        naturalezaOperacion = NaturalezaOperacion.CREDITO;
+//    }
+//    return naturalezaOperacion;
+//  }
 
-  static MONEDA getMoneda(String cadena) {
-    MONEDA moneda = MONEDA.CUP;
-    if (cadena != null) {
-      if (cadena.contains("CUC"))
-        moneda = MONEDA.CUC;
-    }
-    return moneda;
-  }
+//  static MONEDA getMoneda(String cadena) {
+//    MONEDA moneda = MONEDA.CUP;
+//    if (cadena != null) {
+//      if (cadena.contains("CUC"))
+//        moneda = MONEDA.CUC;
+//    }
+//    return moneda;
+//  }
 
   static double castMoney(double imp) {
     return (imp * 100).floor().roundToDouble() / 100;

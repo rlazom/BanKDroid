@@ -62,52 +62,10 @@ class MenuAppBar extends StatelessWidget {
             child: new ListBody(
               children: [
                 new Text('Visor de Operaciones de Banco Metropolitano.'),
-//                new Text('Visor de Operaciones de Banco Metropolitano.\n'),
-//                new Text('Ayúdenos a continuar desarrollando la aplicación.'),
-//                FutureBuilder<JsonObject>(
-//                  future: fetchPost(),
-//                  builder: (context, snapshot) {
-//                    if (snapshot.hasData) {
-//                      //return Text(snapshot.data.title +': '+ snapshot.data.details);
-//
-//                      if(snapshot.data.image!=null)
-//                        {
-//                          Uint8List bytes = BASE64.decode(snapshot.data.image);
-//                          return ListTile(
-//                              leading: new Image.memory(bytes),
-//                              title: new Text(snapshot.data.title),
-//                              subtitle: new Text(snapshot.data.details),);
-//                        }
-//                        else
-//                              {
-//                              return Text("no image");
-//                              }
-//                    } else if (snapshot.hasError) {
-//                      return Text("${snapshot.error}");
-//                    }
-//
-//                    // By default, show a loading spinner
-//                    return CircularProgressIndicator();
-//                  },
-//                )
               ],
             ),
           ),
           actions: [
-//            new Row(
-//              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//              children: [
-//                !canCall
-//                ? new FlatButton(
-//                  onPressed: requestPermissions,
-//                  child: new Text("Solicitar permisos", style: new TextStyle(color: Colors.blue),)
-//                  )
-//                : new FlatButton(
-//                  onPressed: () {_initCall("*234*1*52654732%23");},
-//                  child: new Text('Donar 30 centavos', style: new TextStyle(color: Colors.red),)
-//                  ),
-//              ],
-//            ),
             new Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -119,26 +77,6 @@ class MenuAppBar extends StatelessWidget {
       },
     );
   }
-
-//  Future<JsonObject> fetchPost() async {
-//    final response =
-//      await http.get('https://aleguerra05.now.sh/rest1');
-//
-//    if (response.statusCode == 200) {
-//      // If server returns an OK response, parse the JSON
-//      var responseJson = json.decode(response.body.toString());
-//      return new JsonObject(
-//          dateTime: responseJson["CUB0001"]["dateTime"],
-//          details: responseJson["CUB0001"]["details"],
-//        title: responseJson["CUB0001"]["title"],
-//        image: responseJson["CUB0001"]["image"]
-//      );
-//      return JsonObject.fromJson(json.decode(response.body.toString()));
-//    } else {
-//      // If that response was not OK, throw an error.
-//      throw Exception('Failed to load post');
-//    }
-//  }
 
   _initCall(String number) async {
     if (number != null) await new CallNumber().callNumber(number);

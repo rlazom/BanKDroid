@@ -1,29 +1,24 @@
-// Modelo
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'dart:async';
+import 'package:intl/intl.dart';
+import 'package:unicorndial/unicorndial.dart';
+import 'package:simple_permissions/simple_permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'resumen.dart';
-import 'operation.dart';
-
-// Utils
-import 'operation_list_provider.dart';
-import 'ussd_methods.dart';
-import 'permisions.dart';
-
-// Views
+import 'package:sms/sms.dart';
+//--------------------------------
+import '../models/operation.dart';
+import '../utils/enums.dart';
+import '../utils/operation_list_provider.dart';
+import '../utils/ussd_methods.dart';
+import '../utils/permisions.dart';
+import '../models/resumen.dart';
 import 'resume_tab.dart';
 import 'menu_app_bar_button.dart';
 import 'operation_list.dart';
 
 // External packages
-import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:intl/intl.dart';
 
-// Plugins
-import 'package:unicorndial/unicorndial.dart';
-import 'package:simple_permissions/simple_permissions.dart';
-import 'package:sms/sms.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);

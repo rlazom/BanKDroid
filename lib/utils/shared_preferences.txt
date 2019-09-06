@@ -1,0 +1,2 @@
+is_first_time	    bool
+cuentas_data	    string  (json con datos de las tarjetas  ej: '"banco":"SIGLAS_BANCO","cup":"PAN_TARJETA_CUP","cuc":"PAN_TARJETA_CUC"')

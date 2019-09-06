@@ -41,122 +41,122 @@ public class MainActivity extends FlutterActivity {
 
               @Override
               public void onMethodCall(MethodCall methodCall, MethodChannel.Result result) {
-                  try {
-                      Context context = getActiveContext();
-                      Intent intent = null;
-                      Object resultMethodData = null;
-                      byte[] resultPhotoInputStream = null;
+                try {
+                  Context context = getActiveContext();
+                  Intent intent = null;
+                  Object resultMethodData = null;
+                  byte[] resultPhotoInputStream = null;
 
-                      switch (methodCall.method){
-                          case "selectContacts": {
-                              intent = selectContacts(methodCall);
+                  switch (methodCall.method){
+                    case "selectContacts": {
+                      intent = selectContacts(methodCall);
 
-                              Log.i(TAG, "Sending intent " + intent);
-                              context.startActivity(intent);
-                              result.success(null);
-                              break;
-                          }
-                          case "findContactByPhone": {
-                              resultMethodData = findContactByPhone(methodCall);
-                              result.success(resultMethodData);
-                              break;
-                          }
-                          case "queryContactThumbnail": {
-                              resultPhotoInputStream = queryContactThumbnail(methodCall);
-                              result.success(resultPhotoInputStream);
-                              break;
-                          }
-                          default: {
-                              result.notImplemented();
-                          }
-                      }
+                      Log.i(TAG, "Sending intent " + intent);
+                      context.startActivity(intent);
+                      result.success(null);
+                      break;
+                    }
+                    case "findContactByPhone": {
+                      resultMethodData = findContactByPhone(methodCall);
+                      result.success(resultMethodData);
+                      break;
+                    }
+                    case "queryContactThumbnail": {
+                      resultPhotoInputStream = queryContactThumbnail(methodCall);
+                      result.success(resultPhotoInputStream);
+                      break;
+                    }
+                    default: {
+                      result.notImplemented();
+                    }
                   }
-                  catch (Exception ex){
-                      result.error(ex.getClass().getName(),ex.getMessage(),ex);
-                  }
+                }
+                catch (Exception ex){
+                  result.error(ex.getClass().getName(),ex.getMessage(),ex);
+                }
               }
             }
     );
   }
 
-    private Intent selectContacts(MethodCall methodCall){
-        Log.i(TAG, "Intent extra pan " + methodCall.argument("pan").toString());
-        Log.i(TAG, "Intent extra pan_label " + methodCall.argument("pan_label").toString());
+  private Intent selectContacts(MethodCall methodCall){
+    Log.i(TAG, "Intent extra pan " + methodCall.argument("pan").toString());
+    Log.i(TAG, "Intent extra pan_label " + methodCall.argument("pan_label").toString());
 
-        Intent intent = new Intent(Intent.ACTION_INSERT_OR_EDIT);
-        intent.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
-        intent.putExtra(ContactsContract.Intents.Insert.PHONE, methodCall.argument("pan").toString());
-        intent.putExtra(ContactsContract.Intents.Insert.PHONE_TYPE, methodCall.argument("pan_label").toString());
+    Intent intent = new Intent(Intent.ACTION_INSERT_OR_EDIT);
+    intent.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
+    intent.putExtra(ContactsContract.Intents.Insert.PHONE, methodCall.argument("pan").toString());
+    intent.putExtra(ContactsContract.Intents.Insert.PHONE_TYPE, methodCall.argument("pan_label").toString());
 
-        return intent;
+    return intent;
+  }
+
+  private String findContactByPhone(MethodCall methodCall){
+    String phoneNumber = methodCall.argument("phone").toString();
+    Log.i(TAG, "Search by phone: " + phoneNumber);
+
+    Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
+    String name = "?";
+    String label = "?";
+    String photo_uri = "?";
+    String photo_thumbnail_uri = "?";
+
+    String contact = null;
+
+    ContentResolver contentResolver = getContentResolver();
+    Cursor contactLookup = contentResolver.query(uri, new String[] {
+            BaseColumns._ID,
+            ContactsContract.PhoneLookup.LABEL,
+            ContactsContract.PhoneLookup.DISPLAY_NAME,
+            ContactsContract.Data.PHOTO_URI,
+            ContactsContract.Data.PHOTO_THUMBNAIL_URI
+    }, null, null, null);
+
+    try {
+      if (contactLookup != null && contactLookup.getCount() > 0) {
+        contactLookup.moveToNext();
+        label = contactLookup.getString(contactLookup.getColumnIndex(ContactsContract.PhoneLookup.LABEL));
+        name = contactLookup.getString(contactLookup.getColumnIndex(ContactsContract.Data.DISPLAY_NAME));
+        photo_uri = contactLookup.getString(contactLookup.getColumnIndex(ContactsContract.Data.PHOTO_URI));
+        photo_thumbnail_uri = contactLookup.getString(contactLookup.getColumnIndex(ContactsContract.Data.PHOTO_THUMBNAIL_URI));
+        String contactId = contactLookup.getString(contactLookup.getColumnIndex(BaseColumns._ID));
+
+        Log.i(TAG, "Phone number found on Contact: " + name);
+        contact = "contactId: " + contactId + '|' + "name: " + name + '|' + "label: " + label + '|' + "photo_uri: " + photo_uri + '|' + "photo_thumbnail_uri: " + photo_thumbnail_uri;
+      }
+    } finally {
+      if (contactLookup != null) {
+        contactLookup.close();
+      }
     }
 
-    private String findContactByPhone(MethodCall methodCall){
-        String phoneNumber = methodCall.argument("phone").toString();
-        Log.i(TAG, "Search by phone: " + phoneNumber);
+    return contact;
+  }
 
-        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
-        String name = "?";
-        String label = "?";
-        String photo_uri = "?";
-        String photo_thumbnail_uri = "?";
+  @TargetApi(Build.VERSION_CODES.ECLAIR)
+  private byte[] queryContactThumbnail(MethodCall methodCall) {
+    String photo_thumbnail_uri = methodCall.argument("photo_thumbnail_uri").toString();
+    Log.i(TAG, "Search photo thumbnail by photo_thumbnail_uri: " + photo_thumbnail_uri);
 
-        String contact = null;
-
-        ContentResolver contentResolver = getContentResolver();
-        Cursor contactLookup = contentResolver.query(uri, new String[] {
-                BaseColumns._ID,
-                ContactsContract.PhoneLookup.LABEL,
-                ContactsContract.PhoneLookup.DISPLAY_NAME,
-                ContactsContract.Data.PHOTO_URI,
-                ContactsContract.Data.PHOTO_THUMBNAIL_URI
-        }, null, null, null);
-
-        try {
-            if (contactLookup != null && contactLookup.getCount() > 0) {
-                contactLookup.moveToNext();
-                label = contactLookup.getString(contactLookup.getColumnIndex(ContactsContract.PhoneLookup.LABEL));
-                name = contactLookup.getString(contactLookup.getColumnIndex(ContactsContract.Data.DISPLAY_NAME));
-                photo_uri = contactLookup.getString(contactLookup.getColumnIndex(ContactsContract.Data.PHOTO_URI));
-                photo_thumbnail_uri = contactLookup.getString(contactLookup.getColumnIndex(ContactsContract.Data.PHOTO_THUMBNAIL_URI));
-                String contactId = contactLookup.getString(contactLookup.getColumnIndex(BaseColumns._ID));
-
-                Log.i(TAG, "Phone number found on Contact: " + name);
-                contact = "contactId: " + contactId + '|' + "name: " + name + '|' + "label: " + label + '|' + "photo_uri: " + photo_uri + '|' + "photo_thumbnail_uri: " + photo_thumbnail_uri;
-            }
-        } finally {
-            if (contactLookup != null) {
-                contactLookup.close();
-            }
-        }
-
-        return contact;
+    Uri photoUri = Uri.parse(photo_thumbnail_uri);
+    Cursor cursor = getContentResolver().query(photoUri,
+            new String[] {ContactsContract.Contacts.Photo.PHOTO}, null, null, null);
+    if (cursor == null) {
+      return null;
     }
-
-    @TargetApi(Build.VERSION_CODES.ECLAIR)
-    private byte[] queryContactThumbnail(MethodCall methodCall) {
-        String photo_thumbnail_uri = methodCall.argument("photo_thumbnail_uri").toString();
-        Log.i(TAG, "Search photo thumbnail by photo_thumbnail_uri: " + photo_thumbnail_uri);
-
-        Uri photoUri = Uri.parse(photo_thumbnail_uri);
-        Cursor cursor = getContentResolver().query(photoUri,
-                new String[] {ContactsContract.Contacts.Photo.PHOTO}, null, null, null);
-        if (cursor == null) {
-            return null;
-        }
-        try {
-            if (cursor.moveToFirst()) {
-                byte[] data = cursor.getBlob(0);
-                if (data != null) {
-                    return data;
+    try {
+      if (cursor.moveToFirst()) {
+        byte[] data = cursor.getBlob(0);
+        if (data != null) {
+          return data;
 //                    return new ByteArrayInputStream(data);
-                }
-            }
-        } finally {
-            cursor.close();
         }
-        return null;
+      }
+    } finally {
+      cursor.close();
     }
+    return null;
+  }
 //    public static byte[] getBytesFromInputStream(InputStream is) throws IOException {
 //        ByteArrayOutputStream os = new ByteArrayOutputStream();
 //        byte[] buffer = new byte[0xFFFF];
@@ -183,7 +183,7 @@ public class MainActivity extends FlutterActivity {
 //        }
 //    }
 
-    private Context getActiveContext() {
-      return this.getApplicationContext();
-    }
+  private Context getActiveContext() {
+    return this.getApplicationContext();
+  }
 }

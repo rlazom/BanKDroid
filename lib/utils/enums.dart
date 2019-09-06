@@ -1,46 +1,5 @@
 import 'package:flutter/material.dart';
-
-class Operation{
-  String idOperacion;
-  DateTime fecha;
-  TipoOperacion tipoOperacion;
-  TipoSms tipoSms;
-  NaturalezaOperacion naturaleza;
-  MONEDA moneda;
-  double importe;
-  double saldo;
-  bool isSaldoReal;
-  String observaciones;
-  String fullText;
-
-  Operation(){
-    this.idOperacion = '';
-    this.fecha = DateTime.now();
-    this.tipoOperacion = TipoOperacion.DEFAULT;
-    this.tipoSms = TipoSms.DEFAULT;
-    this.naturaleza = NaturalezaOperacion.DEBITO;
-    this.moneda = MONEDA.CUP;
-    this.importe = 0.00;
-    this.saldo = -1.00;
-    this.isSaldoReal = false;
-    this.observaciones = '';
-    this.fullText = '';
-  }
-
-  @override
-  bool operator ==(other) => other is Operation && other.idOperacion + other.moneda.toString() + other.importe.toStringAsFixed(2) == idOperacion + moneda.toString() + importe.toStringAsFixed(2);
-//  bool operator ==(other) => other is Operation && other.idOperacion + other.moneda.toString() + other.naturaleza.toString() + other.importe.toStringAsFixed(2) == idOperacion + moneda.toString() + naturaleza.toString() + importe.toStringAsFixed(2);
-
-  @override
-  int get hashCode {
-    return idOperacion.hashCode;
-  }
-}
-
-const Color kColorDebito = Colors.redAccent;
-const Color kColorCredito = Colors.lightGreen;
-const Color kDefaultIconColor = Colors.grey;
-
+import 'colors.dart';
 
 enum TipoSms{
   CONSULTAR_ALL_ACCOUNTS,

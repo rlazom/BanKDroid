@@ -1,18 +1,16 @@
+import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:typed_data';
-
-import 'package:bankdroid/phoneContact.dart';
+import 'package:bankdroid/models/phoneContact.dart';
 import 'package:flutter/services.dart';
-
 import 'package:simple_permissions/simple_permissions.dart';
 import 'package:sms/contact.dart';
+import 'package:intl/intl.dart';
 //import 'package:contacts_service/contacts_service.dart';
 
-import 'permisions.dart';
-import 'package:intl/intl.dart';
-
-import 'operation.dart';
-import 'package:flutter/material.dart';
+import '../utils/enums.dart';
+import '../utils/permisions.dart';
+import '../models/operation.dart';
 
 const CHANNEL = const MethodChannel("cu.makkura.bankdroid/selectContacts");
 

@@ -1,38 +1,22 @@
 buildscript {
     repositories {
-        mavenLocal()
-        maven{
-            url 'https://nexus.datys.cu/content/repositories/android-support-repository/'
-        }
-        maven{
-            url 'https://nexus.datys.cu/content/repositories/google-maven/'
-        }
-        maven{
-            url 'https://nexus.datys.cu/content/repositories/apache/'
-        }
-//        google()
-//        jcenter()
+        maven { url "D:/m2repository" }
+        maven { url "C:/Users/StarK/.m2/repository" }
+        google()
+        jcenter()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.android.tools.build:gradle:3.2.1'
     }
 }
 
 allprojects {
     repositories {
-        mavenLocal()
-        maven{
-            url 'https://nexus.datys.cu/content/repositories/android-support-repository/'
-        }
-        maven{
-            url 'https://nexus.datys.cu/content/repositories/google-maven/'
-        }
-        maven{
-            url 'https://nexus.datys.cu/content/repositories/apache/'
-        }
-//        google()
-//        jcenter()
+        maven { url "D:/m2repository" }
+        maven { url "C:/Users/StarK/.m2/repository" }
+        google()
+        jcenter()
     }
 }
 
