@@ -1,30 +1,38 @@
 name: bankdroid
 description: A new Flutter project.
 
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+version: 2.0.1+201
+
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+
 dependencies:
   flutter:
     sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: '^0.1.2'
-#  sms: '^0.1.4'
+  cupertino_icons: ^0.1.2
   sms: '0.2.4'
-#  http: any
-#  http: ^0.11.3+16
-#  path_provider: '>=0.4.1'
   shared_preferences: '0.4.3'
   call_number: '^0.0.1'
   intl: '^0.15.7'
   simple_permissions: '^0.1.8'
   sticky_header_list: '^1.0.5'
   package_info: '^0.3.2'
-
   unicorndial: '^1.1.5'
-
-#  android_intent: '^0.2.1'
-#  contact_picker: '^0.0.2'
-#  contacts_service: '^0.0.9'
+  intro_views_flutter: '^2.6.0'
+  path_provider: '^0.4.1'
 
 dev_dependencies:
   flutter_test:
@@ -43,16 +51,15 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  #assets:
-  #  - assets/splash_black.png
-  #  - images/a_dot_burr.jpeg
+  assets:
+    - images/logo_apk.png
   #  - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.io/assets-and-images/#resolution-aware.
+  # https://flutter.dev/assets-and-images/#resolution-aware.
 
   # For details regarding adding assets from package dependencies, see
-  # https://flutter.io/assets-and-images/#from-packages
+  # https://flutter.dev/assets-and-images/#from-packages
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
@@ -72,4 +79,4 @@ flutter:
   #         weight: 700
   #
   # For details regarding fonts from package dependencies,
-  # see https://flutter.io/custom-fonts/#from-packages
+  # see https://flutter.dev/custom-fonts/#from-packages
