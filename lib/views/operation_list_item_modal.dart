@@ -15,6 +15,16 @@ import '../models/operation.dart';
 const CHANNEL = const MethodChannel("cu.makkura.bankdroid/selectContacts");
 
 Future showOperationModal(BuildContext context, Operation operation) async {
+  //aki por algun motivo da una excepcion no manejada:
+  /*
+  I/flutter ( 2950): Another exception was thrown: RenderShrinkWrappingViewport does not support returning intrinsic dimensions.
+  I/flutter ( 2950): Another exception was thrown: RenderBox was not laid out: RenderIntrinsicWidth#145f6 relayoutBoundary=up5 NEEDS-PAINT
+  I/flutter ( 2950): Another exception was thrown: RenderBox was not laid out: _RenderInkFeatures#9c9c5 relayoutBoundary=up4 NEEDS-PAINT
+  I/flutter ( 2950): Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#1522d relayoutBoundary=up3 NEEDS-PAINT
+  I/flutter ( 2950): Another exception was thrown: RenderBox was not laid out: RenderPhysicalShape#cfa65 relayoutBoundary=up2 NEEDS-PAINT
+  I/flutter ( 2950): Another exception was thrown: 'package:flutter/src/rendering/shifted_box.dart': Failed assertion: line 314 pos 12: 'child.hasSize': is not true.
+  I/flutter ( 2950): Another exception was thrown: RenderBox was not laid out: RenderPhysicalShape#cfa65 relayoutBoundary=up2
+  */
 
   List<Widget> listModalContentElements = await getModalContentList(context, operation);
 
@@ -47,11 +57,13 @@ Future showOperationModal(BuildContext context, Operation operation) async {
               ),
             ],
           ),
-          content: new ListView(
-            physics: NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            children: listModalContentElements,
-          ),
+          content: Text("Pendiente") /*Expanded(child: SizedBox( child: new ListView.builder(
+              physics: NeverScrollableScrollPhysics(),
+              scrollDirection: Axis.vertical,
+              shrinkWrap: true,
+              itemBuilder: (BuildContext context,int index){ return listModalContentElements[index];}),
+          )
+          )*/,
         );
       });
 //  });

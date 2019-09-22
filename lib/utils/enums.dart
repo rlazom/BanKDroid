@@ -41,6 +41,7 @@ enum TipoOperacion{
   AJUSTE,
   POS,
   MISSING,
+  ENZONA,
   DEFAULT,
 }
 
@@ -72,6 +73,7 @@ IconData getIconData(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.MULTA ? Icons.assignment
       : tipoOperacion == TipoOperacion.AJUSTE ? Icons.exposure
       : tipoOperacion == TipoOperacion.MISSING ? Icons.broken_image
+      : tipoOperacion == TipoOperacion.ENZONA ? Icons.data_usage
       : Icons.help_outline;
 }
 
@@ -94,6 +96,8 @@ String getOperationTitle(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.DESCUENTO_NOMINA ? "Descuento Nómina"
       : tipoOperacion == TipoOperacion.MULTA ? "Multa"
       : tipoOperacion == TipoOperacion.AJUSTE ? "Ajuste"
+      : tipoOperacion == TipoOperacion.AGUA ? "Factura Agua"
+      : tipoOperacion == TipoOperacion.ENZONA ? "En Zona"
       : "Desconocido";
 }
 

@@ -54,6 +54,8 @@ class OperationListProvider {
       }
       else{
         // ESTAMOS ASUMIENDO QUE LA MONEDA POR DEFECTO CUP FUE DE LA QUE SE EFECTUO LA RECARGA
+        if(op.saldo<100) // delicado pie para, si el saldo es menor que 100, asumir que la moneda de la operacion es CUC
+          op.moneda = MONEDA.CUC;
         op.importe = op.moneda == MONEDA.CUC ? op.importe : op.importe * 25.0;
       }
     });
@@ -359,13 +361,15 @@ class OperationListProvider {
 
     TipoOperacion tipoServicio = TipoOperacion.DEFAULT;
     if (cadena != null) {
-      if (idOperacion == "AY")
+      if (idOperacion == "AY" || idTransaccion=="AY")
         tipoServicio = TipoOperacion.ATM;
       else if (idOperacion == "TELF" || cadena.contains("telef"))
         tipoServicio = TipoOperacion.TELEFONO;
       else if (idOperacion == "ELECT" || cadena.contains("electricidad"))
         tipoServicio = TipoOperacion.ELECTRICIDAD;
-      else if (idOperacion == "RECA" || cadena.contains("recarga"))
+      else if (cadena.contains("agua"))
+        tipoServicio = TipoOperacion.AGUA;
+      else if (idOperacion == "RECA" || cadena.contains("recarga") || idOperacion == "MREC")
         tipoServicio = TipoOperacion.RECARGA_MOVIL;
       else if (idOperacion == "UU")
         tipoServicio = TipoOperacion.AJUSTE;
@@ -375,7 +379,7 @@ class OperationListProvider {
         tipoServicio = TipoOperacion.TRANSFERENCIA;
       else if (idOperacion == "MULT" && idTransaccion == "YY")
         tipoServicio = TipoOperacion.MULTA;
-      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.CREDITO)
+      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.CREDITO || idOperacion == "ACRED")
         tipoServicio = TipoOperacion.SALARIO;
       else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.DEBITO)
         tipoServicio = TipoOperacion.DESCUENTO_NOMINA;
@@ -385,9 +389,13 @@ class OperationListProvider {
         tipoServicio = TipoOperacion.JUBILACION;
       else if (idOperacion == "IO")
         tipoServicio = TipoOperacion.INTERES;
-      else if (idOperacion == "AP")
+      else if (idOperacion == "AP"||idOperacion == "POS")
         tipoServicio = TipoOperacion.POS;
+      else if (idOperacion == "ENZONA" ||idOperacion == "ZZ" || idTransaccion == "ZZ")
+        tipoServicio = TipoOperacion.ENZONA;
     }
+    if(tipoServicio==TipoOperacion.DEFAULT)
+      print("aki");
     return tipoServicio;
   }
 
