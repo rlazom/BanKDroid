@@ -1,0 +1,14 @@
+name: Docker Image CI
+
+on: [push]
+
+jobs:
+
+  build:
+ 
+    runs-on: gableroux/flutter:v1.7.6
+ 
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build apk
+      run: flutter build apk --release
