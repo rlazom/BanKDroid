@@ -17,4 +17,4 @@ jobs:
       with:
         flutter-version: '1.7.8+hotfix.4'
     - run: flutter pub get
-    - run: flutter build apk --release
+    - run: flutter build apk --stacktrace
