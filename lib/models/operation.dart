@@ -63,7 +63,9 @@ class Operation {
         tipoServicio = TipoOperacion.TELEFONO;
       else if (idOperacion == "ELECT" || cadena.contains("electricidad"))
         tipoServicio = TipoOperacion.ELECTRICIDAD;
-      else if (idOperacion == "RECA" || cadena.contains("recarga"))
+      else if (cadena.contains("agua"))
+        tipoServicio = TipoOperacion.AGUA;
+      else if (idOperacion == "RECA" || cadena.contains("recarga") || idOperacion == "MREC")
         tipoServicio = TipoOperacion.RECARGA_MOVIL;
       else if (idOperacion == "UU")
         tipoServicio = TipoOperacion.AJUSTE;
@@ -87,6 +89,8 @@ class Operation {
         tipoServicio = TipoOperacion.POS;
       else if (idOperacion == "AGUA" && idTransaccion == "MM")
         tipoServicio = TipoOperacion.AGUA;
+      else if (idOperacion == "ENZONA" ||idOperacion == "ZZ" || idTransaccion == "ZZ")
+        tipoServicio = TipoOperacion.ENZONA;
     }
     if(tipoServicio == TipoOperacion.DEFAULT){
       print('NO SE ENCONTRO UNA OPERACION. $cadena $naturaleza');
