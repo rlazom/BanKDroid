@@ -362,9 +362,9 @@ class OperationListProvider {
         || tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO);
   }
 
-//  static TipoOperacion getTipoOperacion(String cadena, NaturalezaOperacion naturaleza) {
-//    String idOperacion = cadena.split(" ")[0];
-//    String idTransaccion = cadena.split(" ")[1].substring(0,2);
+  static TipoOperacion getTipoOperacion(String cadena, NaturalezaOperacion naturaleza) {
+    String idOperacion = cadena.split(" ")[0];
+    String idTransaccion = cadena.split(" ")[1].substring(0,2);
 //
 //    TipoOperacion tipoServicio = TipoOperacion.DEFAULT;
 //    if (cadena != null) {
