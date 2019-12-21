@@ -105,6 +105,8 @@ class OperationListProvider {
     operationsWithSaldo
         .removeWhere((op) => op.tipoOperacion == TipoOperacion.SALDO);
 
+    operationsWithSaldo = AgregarOperacionesAjustes(operationsWithSaldo);
+
     return operationsWithSaldo;
   }
 
@@ -545,5 +547,37 @@ class OperationListProvider {
 
     ResumeMonth resumeMonth = new ResumeMonth(listOperations.first.fecha, resumenCr, resumenDb, listTypes);
     return resumeMonth;
+  }
+
+  static List<Operation> AgregarOperacionesAjustes(List<Operation> operationsSorted) {
+
+    var first = true;
+    var previousOper = new Operation();
+
+    operationsSorted.where((o)=>o.moneda == MONEDA.CUP).forEach((op){
+      if(first)
+        var a = true;
+      else
+        {
+          if(previousOper.naturaleza == NaturalezaOperacion.CREDITO)
+          {
+            if (previousOper.saldo - previousOper.importe - op.saldo > 0.01 && op.isSaldoReal) {
+              print("mal");
+              double ajuste = previousOper.saldo - previousOper.importe -
+                  op.saldo;
+            }
+          }
+          else
+            if(previousOper.saldo + previousOper.importe - op.saldo > 0.01 && op.isSaldoReal) {
+              print("mal");
+              double ajuste = previousOper.saldo + previousOper.importe - op.saldo;
+            }
+        }
+      previousOper = op;
+      first = false;
+    });
+
+    return operationsSorted;
+
   }
 }

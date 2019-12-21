@@ -171,6 +171,14 @@ class Operation {
       operation.importe = double.parse(lines[0].split(". ")[2].split(": ")[1].split(" ")[0].trim()).abs();
       operation.saldo = double.parse(lines[0].split(". ")[5].split(": ")[1].trim().replaceAll('CR ','')).abs();
       operation.isSaldoReal = true;
+
+      if (lines.length > 1)  //preguntando si la recarga tiene mas de una linea para quitarle al importe el 5%
+        if (lines[1].contains('descuento del 5%'))
+        {
+          var a = 5.0 * operation.importe / 100.0;
+          operation.importe -= a;
+        }
+
       var phoneTemp = lines[0].split(". ")[3].split(": ")[1].trim();
       if(phoneTemp.length == 8){
         phoneTemp = '+53' + phoneTemp;
