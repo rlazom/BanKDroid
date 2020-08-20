@@ -1,11 +1,13 @@
-import 'ussd_methods.dart';
-import 'resumen.dart';
-import 'operation.dart';
-import 'operation_list_item_modal.dart';
-import 'operation_list_type_modal.dart';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import 'operation_list_item_modal.dart';
+import 'operation_list_type_modal.dart';
+import '../models/resumen.dart';
+import '../models/operation.dart';
+import '../utils/ussd_methods.dart';
+import '../utils/colors.dart';
+import '../utils/enums.dart';
 
 class HomeDashboard extends StatefulWidget {
   final bool conected;
@@ -392,10 +394,10 @@ class OperacionGastoIngresoListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FlatButton(
-      padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-      onPressed: () => showOperationsTypeModal(context,operations),
-      child: new Card(
+    return new Card(
+      child: new InkWell(
+        borderRadius: BorderRadius.all(Radius.circular(4.0)),
+        onTap: () => showOperationsTypeModal(context,operations),
         child: new Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

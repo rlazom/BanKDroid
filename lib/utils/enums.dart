@@ -1,49 +1,11 @@
 import 'package:flutter/material.dart';
-
-class Operation{
-  String idOperacion;
-  DateTime fecha;
-  TipoOperacion tipoOperacion;
-  TipoSms tipoSms;
-  NaturalezaOperacion naturaleza;
-  MONEDA moneda;
-  double importe;
-  double saldo;
-  bool isSaldoReal;
-  String observaciones;
-  String fullText;
-
-  Operation(){
-    this.idOperacion = '';
-    this.fecha = DateTime.now();
-    this.tipoOperacion = TipoOperacion.DEFAULT;
-    this.tipoSms = TipoSms.DEFAULT;
-    this.naturaleza = NaturalezaOperacion.DEBITO;
-    this.moneda = MONEDA.CUP;
-    this.importe = 0.00;
-    this.saldo = -1.00;
-    this.isSaldoReal = false;
-    this.observaciones = '';
-    this.fullText = '';
-  }
-
-  @override
-  bool operator ==(other) => other is Operation && other.idOperacion + other.moneda.toString() == idOperacion + moneda.toString();
-
-  @override
-  int get hashCode {
-    return idOperacion.hashCode;
-  }
-}
-
-const Color kColorDebito = Colors.redAccent;
-const Color kColorCredito = Colors.lightGreen;
-const Color kDefaultIconColor = Colors.grey;
-
+import 'colors.dart';
 
 enum TipoSms{
+  CONSULTAR_ALL_ACCOUNTS,
   CONSULTAR_SALDO,
   CONSULTAR_SALDO_ERROR,
+  RECARGA_MOVIL,
   TRANSFERENCIA_TX_SALDO,
   TRANSFERENCIA_RX_SALDO,
   TRANSFERENCIA_FALLIDA,
@@ -64,11 +26,14 @@ enum TipoSms{
 
 enum TipoOperacion{
   SALARIO,
+  DESCUENTO_NOMINA,
   JUBILACION,
   INTERES,
   SALDO,
   ATM,
   TRANSFERENCIA,
+  RECARGA_MOVIL,
+  OP_VENTANILLA,
   ELECTRICIDAD,
   TELEFONO,
   AGUA,
@@ -76,6 +41,7 @@ enum TipoOperacion{
   AJUSTE,
   POS,
   MISSING,
+  ENZONA,
   DEFAULT,
 }
 
@@ -98,12 +64,16 @@ IconData getIconData(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.AGUA ? Icons.opacity
       : tipoOperacion == TipoOperacion.INTERES ? Icons.payment
       : tipoOperacion == TipoOperacion.TRANSFERENCIA ? Icons.compare_arrows
+      : tipoOperacion == TipoOperacion.RECARGA_MOVIL ? Icons.phone_android
+      : tipoOperacion == TipoOperacion.OP_VENTANILLA ? Icons.account_balance
       : tipoOperacion == TipoOperacion.POS ? Icons.shopping_cart
       : tipoOperacion == TipoOperacion.SALARIO ? Icons.work
       : tipoOperacion == TipoOperacion.JUBILACION ? Icons.work
+      : tipoOperacion == TipoOperacion.DESCUENTO_NOMINA ? Icons.work
       : tipoOperacion == TipoOperacion.MULTA ? Icons.assignment
       : tipoOperacion == TipoOperacion.AJUSTE ? Icons.exposure
       : tipoOperacion == TipoOperacion.MISSING ? Icons.broken_image
+      : tipoOperacion == TipoOperacion.ENZONA ? Icons.data_usage
       : Icons.help_outline;
 }
 
@@ -118,11 +88,16 @@ String getOperationTitle(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.ELECTRICIDAD ? "Factura Electrica"
       : tipoOperacion == TipoOperacion.INTERES ? "Intereses"
       : tipoOperacion == TipoOperacion.TRANSFERENCIA ? "Transferencia"
+      : tipoOperacion == TipoOperacion.RECARGA_MOVIL ? "Recarga Movil"
+      : tipoOperacion == TipoOperacion.OP_VENTANILLA ? "Op. Ventanilla"
       : tipoOperacion == TipoOperacion.POS ? "POS"
       : tipoOperacion == TipoOperacion.SALARIO ? "Salario"
       : tipoOperacion == TipoOperacion.JUBILACION ? "Jubilacion"
+      : tipoOperacion == TipoOperacion.DESCUENTO_NOMINA ? "Descuento Nómina"
       : tipoOperacion == TipoOperacion.MULTA ? "Multa"
       : tipoOperacion == TipoOperacion.AJUSTE ? "Ajuste"
+      : tipoOperacion == TipoOperacion.AGUA ? "Factura Agua"
+      : tipoOperacion == TipoOperacion.ENZONA ? "En Zona"
       : "Desconocido";
 }
 

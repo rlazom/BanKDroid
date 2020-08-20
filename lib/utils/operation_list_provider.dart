@@ -1,10 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'resumen.dart';
-import 'operation.dart';
-
 import 'dart:async';
 import 'package:sms/sms.dart';
+
+import '../models/resumen.dart';
+import '../models/operation.dart';
+import 'enums.dart';
 
 class OperationListProvider {
   double saldoCUP;
@@ -43,6 +43,21 @@ class OperationListProvider {
       }
       List<Operation> operationsSMS = smsToOperations(sms, idOperationSaldo);
       operations..addAll(operationsSMS);
+    });
+
+    // Buscando la moneda de los mensajes de recarga
+    List<Operation> operationsRecargaUltOps = operations.where((o) => o.tipoOperacion == TipoOperacion.RECARGA_MOVIL && o.tipoSms == TipoSms.ULTIMAS_OPERACIONES).toList();
+    operations.where((o) => o.tipoOperacion == TipoOperacion.RECARGA_MOVIL && o.tipoSms != TipoSms.ULTIMAS_OPERACIONES).toList().forEach((op) {
+      if (operationsRecargaUltOps.any((p) => p.idOperacion == op.idOperacion)) {
+        op.moneda = operationsRecargaUltOps.firstWhere((p) => p.idOperacion == op.idOperacion).moneda;
+        op.importe = op.moneda == MONEDA.CUC ? op.importe : op.importe * 25.0;
+      }
+      else{
+        // ESTAMOS ASUMIENDO QUE LA MONEDA POR DEFECTO CUP FUE DE LA QUE SE EFECTUO LA RECARGA
+        if(op.saldo<100) // delicado pie para, si el saldo es menor que 100, asumir que la moneda de la operacion es CUC
+          op.moneda = MONEDA.CUC;
+        op.importe = op.moneda == MONEDA.CUC ? op.importe : op.importe * 25.0;
+      }
     });
 
     // Arreglando los mensajes de transferencia recivida en cuenta CUC con importe en CUP
@@ -90,6 +105,8 @@ class OperationListProvider {
     operationsWithSaldo
         .removeWhere((op) => op.tipoOperacion == TipoOperacion.SALDO);
 
+    operationsWithSaldo = AgregarOperacionesAjustes(operationsWithSaldo);
+
     return operationsWithSaldo;
   }
 
@@ -101,98 +118,121 @@ class OperationListProvider {
     TipoSms tipoSms = getTipoSms(message);
     List<Operation> list = new List<Operation>();
 
-    var lines = message.body.split("\n");
+//    var lines = message.body.split("\n");
+    var lines = message.body.replaceAll('\r','').replaceAll('|','').split("\n");
     DateTime smsDate = message.date;
 
     if (tipoSms == TipoSms.ULTIMAS_OPERACIONES) {
       for (int i = 2; i < lines.length - 1; i++) {
-        if (lines[i].contains("INFO:")) continue;
-
-        Operation operation = new Operation();
-        operation.tipoSms = TipoSms.ULTIMAS_OPERACIONES;
-
-        if(lines[i].trim()=="")
-          continue;
+        if (lines[i].trim().contains("INFO:")) continue;
+        if(lines[i].trim()=="") continue;
 
         var items = lines[i].split(";");
-        String dateStr = items[0].trim();
 
-        var parts = dateStr.split('/');
-
-        DateTime date = new DateTime(int.parse(parts.elementAt(2)),
-            int.parse(parts.elementAt(1)), int.parse(parts.elementAt(0)));
-
-        if (date.isAfter(smsDate)) {
-          date = smsDate;
-        }
-
-        operation.idOperacion = (items[5].trim()).split(" ")[0].trim();
-        operation.fecha = date;
-        operation.tipoOperacion = getTipoOperacion(items[1].trim() + ' ' + items[5].trim().split(" ")[0].trim());
-        operation.naturaleza = getNaturalezaOperacion(items[2].trim());
-        operation.moneda = getMoneda(items[4].trim());
-        operation.importe = double.parse(items[3].trim());
+        Operation operation = Operation().OperationFromSms(idOperationSaldo, tipoSms, smsDate, items);
+//        Operation operation = new Operation();
+//        operation.tipoSms = TipoSms.ULTIMAS_OPERACIONES;
+//
+//        var items = lines[i].split(";");
+//        String dateStr = items[0].trim();
+//        var parts = dateStr.split('/');
+//
+//        DateTime date = new DateTime(int.parse(parts.elementAt(2)),
+//            int.parse(parts.elementAt(1)), int.parse(parts.elementAt(0)));
+//
+//        if (date.isAfter(smsDate)) {
+//          date = smsDate;
+//        }
+//
+//        operation.idOperacion = (items[5].trim()).split(" ")[0].trim();
+//        operation.fecha = date;
+//        operation.importe = double.parse(items[3].trim());
+//        operation.naturaleza = getNaturalezaOperacion(items[2].trim());
+//        operation.tipoOperacion = getTipoOperacion(items[1].trim() + ' ' + items[5].trim().split(" ")[0].trim(), operation.naturaleza);
+//        operation.moneda = getMoneda(items[4].trim());
 
         list.add(operation);
       }
-    } else if (tipoSms == TipoSms.CONSULTAR_SALDO) {
-      Operation operation = new Operation();
-      operation.idOperacion = idOperationSaldo.toString();
-      operation.tipoOperacion = TipoOperacion.SALDO;
-      operation.tipoSms = TipoSms.CONSULTAR_SALDO;
-      operation.fecha = message.date;
-      operation.moneda = getMoneda(lines[2].trim().split(" ")[4].trim());
-      operation.saldo = double.parse(lines[1].trim().split(" ")[3].trim());
-      operation.isSaldoReal = true;
-      operation.fullText = message.body.trim();
-      list.add(operation);
-    } else if (tipoSms == TipoSms.FACTURA_PAGADA ||
-        tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO ||
-        tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
-
-      Operation operation = new Operation();
-      operation.fecha = message.date;
-      operation.fullText = message.body.trim();
-
-      if (tipoSms == TipoSms.FACTURA_PAGADA) {
-        operation.idOperacion = lines[3].trim().split(" ")[2].trim();
-        var factura = lines[1].trim().split(": ")[1].trim();
-        operation.observaciones = "Factura: " + factura;
-        operation.tipoOperacion = getTipoOperacion(lines[0]);
-        operation.tipoSms = TipoSms.FACTURA_PAGADA;
-        operation.naturaleza = NaturalezaOperacion.DEBITO;
-        operation.moneda = getMoneda(lines[2].trim().split(" ")[3].trim());
-        operation.importe = double.parse(lines[2].trim().split(" ")[2].trim());
-        operation.saldo = double.parse(lines[4].trim().split(" ")[3].trim());
-        operation.isSaldoReal = true;
-      } else if (tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO) {
-        operation.idOperacion = lines[0].trim().split(" ")[14].trim();
-        var cuenta = lines[0].trim().split("cuenta")[1].trim().split(" ")[0].trim();
-        operation.observaciones = "Cuenta: " + cuenta;
-        operation.tipoOperacion = TipoOperacion.TRANSFERENCIA;
-        operation.tipoSms = TipoSms.TRANSFERENCIA_RX_SALDO;
-        operation.naturaleza = NaturalezaOperacion.CREDITO;
-        if(cuenta.substring(0,4) == '9202' || cuenta.substring(0,4) == '9200'){
-          operation.moneda = MONEDA.CUC;
-        }
-        else{
-          operation.moneda = getMoneda(lines[0].trim().split(" ")[11].trim());
-        }
-        operation.importe = double.parse(lines[0].trim().split(" ")[10].trim());
-      } else if (tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
-        operation.idOperacion = lines[5].trim().split(" ")[2].trim();
-        var cuenta = lines[1].trim().split(" ")[1].trim();
-        operation.observaciones = "Beneficiario: " + cuenta;
-        operation.tipoOperacion = TipoOperacion.TRANSFERENCIA;
-        operation.tipoSms = TipoSms.TRANSFERENCIA_TX_SALDO;
-        operation.naturaleza = NaturalezaOperacion.DEBITO;
-        operation.moneda = getMoneda(lines[3].trim().split(" ")[2].trim());
-        operation.importe = double.parse(lines[3].trim().split(" ")[1].trim());
-        operation.saldo = double.parse(lines[4].trim().split(" ")[3].trim());
-        operation.isSaldoReal = true;
-      }
+    }
+    else {
+      Operation operation = Operation().OperationFromSms(idOperationSaldo, tipoSms, smsDate, message.body.trim());
       list.add(operation);
     }
+
+//    else if (tipoSms == TipoSms.CONSULTAR_SALDO) {
+//      Operation operation = new Operation();
+//      operation.idOperacion = idOperationSaldo.toString();
+//      operation.tipoOperacion = TipoOperacion.SALDO;
+//      operation.tipoSms = TipoSms.CONSULTAR_SALDO;
+//      operation.fecha = message.date;
+//      operation.moneda = getMoneda(lines[2].trim().split(" ")[4].trim());
+//      operation.saldo = double.parse(lines[1].trim().split(" ")[3].trim());
+//      operation.isSaldoReal = true;
+//      operation.fullText = message.body.trim();
+//      list.add(operation);
+//    } else if (tipoSms == TipoSms.RECARGA_MOVIL) {
+//      Operation operation = new Operation();
+//      operation.idOperacion = lines[0].split(". ")[4].split(": ")[1].toString();
+//      operation.tipoOperacion = TipoOperacion.RECARGA_MOVIL;
+//      operation.tipoSms = TipoSms.RECARGA_MOVIL;
+//      operation.fecha = message.date;
+//      operation.importe = double.parse(lines[0].split(". ")[2].split(": ")[1].split(" ")[0].trim()).abs();
+//      operation.saldo = double.parse(lines[0].split(". ")[5].split(": ")[1].trim().replaceAll('CR ','')).abs();
+//      operation.isSaldoReal = true;
+//      var phoneTemp = lines[0].split(". ")[3].split(": ")[1].trim();
+//      if(phoneTemp.length == 8){
+//        phoneTemp = '+53' + phoneTemp;
+//      }
+//      operation.observaciones = "Movil: " + phoneTemp;
+//      operation.fullText = message.body.trim();
+//      list.add(operation);
+//    } else if (tipoSms == TipoSms.FACTURA_PAGADA ||
+//        tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO ||
+//        tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
+//
+//      Operation operation = new Operation();
+//      operation.fecha = message.date;
+//      operation.fullText = message.body.trim();
+//
+//      if (tipoSms == TipoSms.FACTURA_PAGADA) {
+//        operation.idOperacion = lines[3].trim().split(" ")[2].trim();
+//        var factura = lines[1].trim().split(": ")[1].trim();
+//        operation.observaciones = "Factura: " + factura;
+//        operation.importe = double.parse(lines[2].trim().split(" ")[2].trim());
+//        operation.naturaleza = NaturalezaOperacion.DEBITO;
+//        operation.tipoOperacion = getTipoOperacion(lines[0], operation.naturaleza);
+//        operation.tipoSms = TipoSms.FACTURA_PAGADA;
+//        operation.moneda = getMoneda(lines[2].trim().split(" ")[3].trim());
+//        operation.saldo = double.parse(lines[4].trim().split(" ")[3].trim());
+//        operation.isSaldoReal = true;
+//      } else if (tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO) {
+//        operation.idOperacion = lines[0].trim().split(" ")[14].trim();
+//        var cuenta = lines[0].trim().split("cuenta")[1].trim().split(" ")[0].trim();
+//        operation.observaciones = "Cuenta: " + cuenta;
+//        operation.tipoOperacion = TipoOperacion.TRANSFERENCIA;
+//        operation.tipoSms = TipoSms.TRANSFERENCIA_RX_SALDO;
+//        operation.naturaleza = NaturalezaOperacion.CREDITO;
+//        if(cuenta.substring(0,4) == '9202' || cuenta.substring(0,4) == '9200'){
+//          operation.moneda = MONEDA.CUC;
+//        }
+//        else{
+//          operation.moneda = getMoneda(lines[0].trim().split(" ")[11].trim());
+//        }
+//        operation.importe = double.parse(lines[0].trim().split(" ")[10].trim());
+//      } else if (tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
+//        operation.idOperacion = lines[5].trim().split(" ")[2].trim();
+//        var cuenta = lines[1].trim().split(" ")[1].trim();
+//        operation.observaciones = "Beneficiario: " + cuenta;
+//        operation.tipoOperacion = TipoOperacion.TRANSFERENCIA;
+//        operation.tipoSms = TipoSms.TRANSFERENCIA_TX_SALDO;
+//        operation.naturaleza = NaturalezaOperacion.DEBITO;
+//        operation.moneda = getMoneda(lines[3].trim().split(" ")[2].trim());
+//        operation.importe = double.parse(lines[3].trim().split(" ")[1].trim());
+//        operation.saldo = double.parse(lines[4].trim().split(" ")[3].trim());
+//        operation.isSaldoReal = true;
+//      }
+//      list.add(operation);
+//    }
     return list;
   }
 
@@ -268,7 +308,7 @@ class OperationListProvider {
   }
 
   static TipoSms getTipoSms(SmsMessage message) {
-    if (message.body.contains("La consulta de saldo"))
+    if (message.body.contains("La consulta de saldo") && message.body.contains("Saldo Contable"))
       return TipoSms.CONSULTAR_SALDO;
     else if (message.body.contains("Fallo la consulta de saldo"))
       return TipoSms.CONSULTAR_SALDO_ERROR;
@@ -282,7 +322,7 @@ class OperationListProvider {
       return TipoSms.ERROR_FACTURA;
     else if (message.body.contains("  Factura: "))
       return TipoSms.FACTURA;
-    else if (message.body.contains("El pago de la factura"))
+    else if (message.body.contains("El pago de la factura") || message.body.contains("El pago parcial de la factura"))
       return TipoSms.FACTURA_PAGADA;
     else if (message.body.contains("Usted se ha autenticado en la plataforma"))
       return TipoSms.AUTENTICAR;
@@ -302,6 +342,10 @@ class OperationListProvider {
       return TipoSms.ERROR_ULTIMAS_OPERACIONES;
     else if (message.body.contains("Banco Metropolitano Ultimas operaciones"))
       return TipoSms.ULTIMAS_OPERACIONES;
+    else if (message.body.contains("La consulta de saldo") && message.body.contains("Nombre Cuenta"))
+      return TipoSms.CONSULTAR_ALL_ACCOUNTS;
+    else if (message.body.contains("La recarga se realizo con exito"))
+      return TipoSms.RECARGA_MOVIL;
     else
       return TipoSms.DEFAULT;
   }
@@ -320,18 +364,74 @@ class OperationListProvider {
         || tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO);
   }
 
-  static TipoOperacion getTipoOperacion(String cadena) {
+  static TipoOperacion getTipoOperacion(String cadena, NaturalezaOperacion naturaleza) {
     String idOperacion = cadena.split(" ")[0];
     String idTransaccion = cadena.split(" ")[1].substring(0,2);
-    
+//
+//    TipoOperacion tipoServicio = TipoOperacion.DEFAULT;
+//    if (cadena != null) {
+//      if (idOperacion == "AY")
+//        tipoServicio = TipoOperacion.ATM;
+//      else if (idOperacion == "TELF" || cadena.contains("telef"))
+//        tipoServicio = TipoOperacion.TELEFONO;
+//      else if (idOperacion == "ELECT" || cadena.contains("electricidad"))
+//        tipoServicio = TipoOperacion.ELECTRICIDAD;
+//      else if (idOperacion == "RECA" || cadena.contains("recarga"))
+//        tipoServicio = TipoOperacion.RECARGA_MOVIL;
+//      else if (idOperacion == "UU")
+//        tipoServicio = TipoOperacion.AJUSTE;
+//      else if (idOperacion == "YY" && idTransaccion == "YY")    // TRANSFERENCIA ATM
+//        tipoServicio = TipoOperacion.TRANSFERENCIA;
+//      else if (idOperacion == "TRAN" && idTransaccion == "MM")  // TRANSFERENCIA MOVIL
+//        tipoServicio = TipoOperacion.TRANSFERENCIA;
+//      else if (idOperacion == "MULT" && idTransaccion == "YY")
+//        tipoServicio = TipoOperacion.MULTA;
+//      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.CREDITO)
+//        tipoServicio = TipoOperacion.SALARIO;
+//      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.DEBITO)
+//        tipoServicio = TipoOperacion.DESCUENTO_NOMINA;
+//      else if (idOperacion == "TL")
+//        tipoServicio = TipoOperacion.OP_VENTANILLA;
+//      else if (idOperacion == "EB")
+//        tipoServicio = TipoOperacion.JUBILACION;
+//      else if (idOperacion == "IO")
+//        tipoServicio = TipoOperacion.INTERES;
+//      else if (idOperacion == "AP")
+//        tipoServicio = TipoOperacion.POS;
+//    }
+//    return tipoServicio;
+//  }
+//
+//  static NaturalezaOperacion getNaturalezaOperacion(String cadena) {
+//    NaturalezaOperacion naturalezaOperacion = NaturalezaOperacion.DEBITO;
+//    if (cadena != null) {
+//      if (cadena.contains("CR"))
+//        naturalezaOperacion = NaturalezaOperacion.CREDITO;
+//    }
+//    return naturalezaOperacion;
+//  }
+//
+//  static MONEDA getMoneda(String cadena) {
+//    MONEDA moneda = MONEDA.CUP;
+//    if (cadena != null) {
+//      if (cadena.contains("CUC"))
+//        moneda = MONEDA.CUC;
+//    }
+//    return moneda;
+//  }
+
     TipoOperacion tipoServicio = TipoOperacion.DEFAULT;
     if (cadena != null) {
-      if (idOperacion == "AY")
+      if (idOperacion == "AY" || idTransaccion=="AY")
         tipoServicio = TipoOperacion.ATM;
       else if (idOperacion == "TELF" || cadena.contains("telef"))
         tipoServicio = TipoOperacion.TELEFONO;
       else if (idOperacion == "ELECT" || cadena.contains("electricidad"))
         tipoServicio = TipoOperacion.ELECTRICIDAD;
+      else if (cadena.contains("agua"))
+        tipoServicio = TipoOperacion.AGUA;
+      else if (idOperacion == "RECA" || cadena.contains("recarga") || idOperacion == "MREC")
+        tipoServicio = TipoOperacion.RECARGA_MOVIL;
       else if (idOperacion == "UU")
         tipoServicio = TipoOperacion.AJUSTE;
       else if (idOperacion == "YY" && idTransaccion == "YY")    // TRANSFERENCIA ATM
@@ -340,15 +440,23 @@ class OperationListProvider {
         tipoServicio = TipoOperacion.TRANSFERENCIA;
       else if (idOperacion == "MULT" && idTransaccion == "YY")
         tipoServicio = TipoOperacion.MULTA;
-      else if (idOperacion == "EV")
+      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.CREDITO || idOperacion == "ACRED")
         tipoServicio = TipoOperacion.SALARIO;
+      else if (idOperacion == "EV" && naturaleza == NaturalezaOperacion.DEBITO)
+        tipoServicio = TipoOperacion.DESCUENTO_NOMINA;
+      else if (idOperacion == "TL")
+        tipoServicio = TipoOperacion.OP_VENTANILLA;
       else if (idOperacion == "EB")
         tipoServicio = TipoOperacion.JUBILACION;
       else if (idOperacion == "IO")
         tipoServicio = TipoOperacion.INTERES;
-      else if (idOperacion == "AP")
+      else if (idOperacion == "AP"||idOperacion == "POS")
         tipoServicio = TipoOperacion.POS;
+      else if (idOperacion == "ENZONA" ||idOperacion == "ZZ" || idTransaccion == "ZZ")
+        tipoServicio = TipoOperacion.ENZONA;
     }
+    if(tipoServicio==TipoOperacion.DEFAULT)
+      print("aki");
     return tipoServicio;
   }
 
@@ -439,5 +547,37 @@ class OperationListProvider {
 
     ResumeMonth resumeMonth = new ResumeMonth(listOperations.first.fecha, resumenCr, resumenDb, listTypes);
     return resumeMonth;
+  }
+
+  static List<Operation> AgregarOperacionesAjustes(List<Operation> operationsSorted) {
+
+    var first = true;
+    var previousOper = new Operation();
+
+    operationsSorted.where((o)=>o.moneda == MONEDA.CUP).forEach((op){
+      if(first)
+        var a = true;
+      else
+        {
+          if(previousOper.naturaleza == NaturalezaOperacion.CREDITO)
+          {
+            if (previousOper.saldo - previousOper.importe - op.saldo > 0.01 && op.isSaldoReal) {
+              print("mal");
+              double ajuste = previousOper.saldo - previousOper.importe -
+                  op.saldo;
+            }
+          }
+          else
+            if(previousOper.saldo + previousOper.importe - op.saldo > 0.01 && op.isSaldoReal) {
+              print("mal");
+              double ajuste = previousOper.saldo + previousOper.importe - op.saldo;
+            }
+        }
+      previousOper = op;
+      first = false;
+    });
+
+    return operationsSorted;
+
   }
 }

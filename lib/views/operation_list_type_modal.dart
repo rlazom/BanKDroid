@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'operation.dart';
-import 'package:flutter/material.dart';
+import '../models/operation.dart';
+import '../utils/colors.dart';
+import '../utils/enums.dart';
 
 void showOperationsTypeModal(BuildContext context, List<Operation> operations){
   List<Widget> listModalContentElements = getModalContentList(operations);
@@ -30,6 +32,7 @@ void showOperationsTypeModal(BuildContext context, List<Operation> operations){
           ),
           content: new Scrollbar(
             child: new ListView(
+              physics: listModalContentElements.where((w) => w.toString() != 'Divider').length > 16 ? null : NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               children: listModalContentElements,
             ),

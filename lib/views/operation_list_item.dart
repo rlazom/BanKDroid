@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'operation_list_item_modal.dart';
-import 'operation.dart';
+import '../utils/enums.dart';
+import '../models/operation.dart';
 
 class OperationListItem extends StatelessWidget {
   final Operation operation;

@@ -1,30 +1,24 @@
-// Modelo
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'dart:async';
+import 'package:intl/intl.dart';
+import 'package:unicorndial/unicorndial.dart';
+import 'package:simple_permissions/simple_permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'resumen.dart';
-import 'operation.dart';
-
-// Utils
-import 'operation_list_provider.dart';
-import 'ussd_methods.dart';
-import 'permisions.dart';
-
-// Views
-import 'home_tab.dart';
+import 'package:sms/sms.dart';
+//--------------------------------
+import '../models/operation.dart';
+import '../utils/enums.dart';
+import '../utils/operation_list_provider.dart';
+import '../utils/ussd_methods.dart';
+import '../utils/permisions.dart';
+import '../models/resumen.dart';
+import 'resume_tab.dart';
 import 'menu_app_bar_button.dart';
-import 'bottom_app_bar.dart';
 import 'operation_list.dart';
 
 // External packages
-import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:intl/intl.dart';
 
-// Plugins
-//import 'package:permission/permission.dart';
-import 'package:simple_permissions/simple_permissions.dart';
-import 'package:sms/sms.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -34,8 +28,11 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => new _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>
-    with SingleTickerProviderStateMixin {
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKeyCup = new GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKeyCuc = new GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
   SharedPreferences prefs;
 
   ScrollController _hideButtonController = new ScrollController();
@@ -99,6 +96,41 @@ class _MyHomePageState extends State<MyHomePage>
     tabController.dispose();
 
     super.dispose();
+  }
+
+  Future<Null> _handleRefresh() {
+    setState(() {
+      _loading = true;
+    });
+    final Completer<Null> completer = new Completer<Null>();
+
+    new Timer(const Duration(seconds: 3), () {
+      _operacionesCUC = new List<Operation>();
+      _operacionesCUP = new List<Operation>();
+      _resumenOperacionesCUC = new List<ResumeMonth>();
+      _resumenOperacionesCUP = new List<ResumeMonth>();
+
+      _reloadSMSOperations();
+      new Timer(const Duration(seconds: 5), () {
+        if (_loading) {
+          setState(() {
+            _loading = false;
+          });
+        }
+      });
+    });
+
+    return completer.future.then((_) {
+      _scaffoldKey.currentState?.showSnackBar(new SnackBar(
+          content: const Text('Refresh complete'),
+          action: new SnackBarAction(
+              label: 'RETRY',
+              onPressed: () {
+                _refreshIndicatorKeyCup.currentState.show();
+              }
+          )
+      ));
+    });
   }
 
   requestPermissions(List<Permission> permissionList) async {
@@ -250,18 +282,37 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   void _initScrollListener() {
-    _hideButtonController.addListener(() {
-      if (_hideButtonController.position.userScrollDirection ==
-          ScrollDirection.reverse) {
-        setState(() {
-          _isFABButtonVisible = false;
-        });
+    _stickyScrollController.addListener(() {
+      if (_stickyScrollController.position.userScrollDirection == ScrollDirection.reverse) {
+        if(_isFABButtonVisible){
+          setState(() {
+            _isFABButtonVisible = false;
+          });
+        }
       }
-      if (_hideButtonController.position.userScrollDirection ==
-          ScrollDirection.forward) {
-        setState(() {
-          _isFABButtonVisible = true;
-        });
+      if (_stickyScrollController.position.userScrollDirection == ScrollDirection.forward) {
+        if(!_isFABButtonVisible){
+          setState(() {
+            _isFABButtonVisible = true;
+          });
+        }
+      }
+    });
+
+    _hideButtonController.addListener(() {
+      if (_hideButtonController.position.userScrollDirection == ScrollDirection.reverse) {
+        if(_isFABButtonVisible){
+          setState(() {
+            _isFABButtonVisible = false;
+          });
+        }
+      }
+      if (_hideButtonController.position.userScrollDirection == ScrollDirection.forward) {
+        if(!_isFABButtonVisible){
+          setState(() {
+            _isFABButtonVisible = true;
+          });
+        }
       }
     });
   }
@@ -358,13 +409,44 @@ class _MyHomePageState extends State<MyHomePage>
     List<Widget> tabsHeader = getTabsHeaders();
     List<Widget> tabsContent = getTabsContents();
 
+    var childButtons = List<UnicornButton>();
+    childButtons.add(UnicornButton(
+//        hasLabel: true,
+//        labelText: _conected ? "Desconectar" : "Conectar",
+        currentButton: FloatingActionButton(
+          heroTag: "train",
+          tooltip: _conected ? "Desconectar" : "Conectar",
+          backgroundColor: _conected ? Colors.lightGreen : Colors.blue,
+          mini: true,
+          child: _conected ? Icon(Icons.close) : Icon(Icons.vpn_key),
+          onPressed: _toggleConect,
+        )));
+    childButtons.add(
+        UnicornButton(
+        currentButton: FloatingActionButton(
+          heroTag: "airplane",
+          tooltip: "Consultar Saldo",
+          backgroundColor: !_conected ? Colors.grey : Colors.blueAccent,
+          mini: true,
+          child: Icon(Icons.attach_money),
+          onPressed: !_conected ? null : callSaldo,
+        )));
+    childButtons.add(UnicornButton(
+        currentButton: FloatingActionButton(
+          heroTag: "directions",
+          tooltip: "Ultimas Operaciones",
+          backgroundColor: !_conected ? Colors.grey : Colors.blueAccent,
+          mini: true,
+          child: Icon(Icons.list),
+          onPressed: !_conected ? null : callUltimasOperaciones,
+        )));
+
     return new DefaultTabController(
       length: 3,
       child: new Scaffold(
         appBar: new AppBar(
           bottom: !_canReadSMS ? null : new TabBar(
             tabs: tabsHeader, controller: tabController,),
-//          title: new Text(widget.title),
           title: AppBarTitle(
             title: widget.title,
             filterCtrl: filterCtrl,
@@ -372,11 +454,6 @@ class _MyHomePageState extends State<MyHomePage>
             searchOperation: _searchOperation,
           ),
           actions: [
-            // TODO: Funcionalidad Filtrar listas, al escribir goTop de la lista
-//            new IconButton(
-//              icon: Icon(_isSearch ? Icons.close : Icons.search),
-//              onPressed: _toggleSearch,
-//            ),
             tabController.index != 0
                 ? new IconButton(
               icon: Icon(_isSearch ? Icons.close : Icons.search),
@@ -422,23 +499,12 @@ class _MyHomePageState extends State<MyHomePage>
             : TabBarView(children: tabsContent, controller: tabController,),
         floatingActionButton: !_canReadSMS || !_isFABButtonVisible
             ? null
-            : FloatingActionButton(
-          elevation: 2.0,
-          onPressed: _loading ? null : _toggleConect,
-          child: _conected
-              ? new Icon(Icons.phonelink_erase)
-              : new Icon(Icons.speaker_phone),
-          backgroundColor: _loading
-              ? Colors.grey
-              : _conected ? Colors.lightGreen : Colors.blue,
-          tooltip: _conected ? "Desconectar" : "Conectar",
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: !_isFABButtonVisible
-            ? null
-            : BottomAppBarWidget(
-          disable: !_conected,
-        ),
+            : new UnicornDialer(
+            backgroundColor: Color.fromRGBO(255, 255, 255, 0.6),
+//            parentButtonBackground: Colors.redAccent,
+            orientation: UnicornOrientation.VERTICAL,
+            parentButton: Icon(Icons.add),
+            childButtons: childButtons),
       ),
     );
   }
@@ -505,18 +571,28 @@ class _MyHomePageState extends State<MyHomePage>
 
     // TAB CUP / CUC
     if (_operacionesCUP.isNotEmpty) {
-      tempListContents.add(OperationList(
-        operaciones: _filteredCUP,
-//        operaciones: _operacionesCUP,
-        stickyListController: _stickyScrollController,
-      ));
+      tempListContents.add(
+          new RefreshIndicator(
+            key: _refreshIndicatorKeyCup,
+            onRefresh: _handleRefresh,
+            child: new OperationList(
+              operaciones: _filteredCUP,
+    //        operaciones: _operacionesCUP,
+              stickyListController: _stickyScrollController,
+            ),
+          ));
     }
     if (_operacionesCUC.isNotEmpty) {
-      tempListContents.add(OperationList(
-        operaciones: _filteredCUC,
-//        operaciones: _operacionesCUC,
-        stickyListController: _stickyScrollController,
-      ));
+      tempListContents.add(
+          new RefreshIndicator(
+            key: _refreshIndicatorKeyCuc,
+            onRefresh: _handleRefresh,
+            child: new OperationList(
+              operaciones: _filteredCUC,
+    //        operaciones: _operacionesCUC,
+              stickyListController: _stickyScrollController,
+            ),
+          ));
     }
     return tempListContents;
   }
@@ -548,11 +624,6 @@ class _MyHomePageState extends State<MyHomePage>
     else {
       setState(() {
         _stickyScrollController.jumpTo(0.0);
-//        _filteredCUP.addAll(_operacionesCUP
-//            .where((op) => getOperationTitle(op.tipoOperacion).toLowerCase().contains(filter.toLowerCase())).toList());
-//
-//        _filteredCUC.addAll(_operacionesCUC
-//            .where((op) => getOperationTitle(op.tipoOperacion).toLowerCase().contains(filter.toLowerCase())).toList());
         _filteredCUP.addAll(filterOperations(_operacionesCUP));
         _filteredCUC.addAll(filterOperations(_operacionesCUC));
       });
