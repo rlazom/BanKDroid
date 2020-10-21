@@ -4,9 +4,9 @@ import 'package:intro_views_flutter/Models/page_view_model.dart';
 import 'package:intro_views_flutter/intro_views_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'home.dart';
-import 'config.dart';
-import '../utils/colors.dart';
+import '../home/views/home_view.dart';
+import '../../views/config.dart';
+import '../../utils/colors.dart';
 
 
 class OnBoarding extends StatefulWidget {
@@ -92,20 +92,15 @@ class _OnBoardingState extends State<OnBoarding> {
         pages,
         onTapDoneButton: () {
 
-          MaterialPageRoute route = MaterialPageRoute(builder: (context) => MyHomePage(title: widget.title),);
+          MaterialPageRoute route = MaterialPageRoute(builder: (context) => HomePage(),);
           if(_isFirstTime){
             route = MaterialPageRoute(builder: (context) =>
-                ConfigData(
-                  title: widget.title,
-                  isFromOnBoarding: true,
-                ),
+                ConfigData(isFromOnBoarding: true),
             );
           }
           if(widget.userId != null){
             route = MaterialPageRoute(builder: (context) =>
-                MyHomePage(
-                  title: widget.title,
-                ),
+                HomePage(),
             );
           }
 

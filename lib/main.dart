@@ -1,48 +1,48 @@
+import 'package:bankdroid/common/providers.dart';
+import 'package:bankdroid/common/theme/app_theme.dart';
+import 'package:bankdroid/components/home/views/home_view.dart';
+import 'package:bankdroid/components/onboarding/on_boarding.dart';
+import 'package:bankdroid/service/shared_preferences_service/shared_preferences_service.dart';
+import 'package:easy_dynamic_theme/easy_dynamic_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
-import 'package:bankdroid/views/home.dart';
-import 'package:bankdroid/views/on_boarding.dart';
 
-void main() => runApp(new MyApp());
+void main() => runApp(EasyDynamicThemeWidget(child: new BankDroid()));
 
-class MyApp extends StatelessWidget {
-  final String title ='BanKDroid';
-  SharedPreferences prefs;
-  bool _isFirstTime = true;
+class BankDroid extends StatelessWidget {
+  static SharedPreferencesService sharedPreferencesService;
+  static bool _isFirstTime = true;
+  Future fLoadData = _loadData();
 
-  Future<bool> _loadSharedPreferences() async {
-    print('_loadSharedPreferences on MAIN');
-
-    prefs = await SharedPreferences.getInstance();
-    _isFirstTime = prefs.getBool('is_first_time') ?? true;
-//    prefs.setBool('is_first_time', false);
-
-    return _isFirstTime;
+  static Future _loadData() async {
+    await sharedPreferencesService.loadInstance();
+    _isFirstTime = sharedPreferencesService.isFirstTime();
   }
 
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
-      title: title,
-      theme: new ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-//      home: new MyHomePage(title: 'BanKDroid'),
-        home: new FutureBuilder(
-            future: _loadSharedPreferences(),
+      title: 'BanKDroid',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: EasyDynamicTheme.of(context).themeMode,
+      home: MultiProvider(
+        providers: providers,
+        child: new FutureBuilder(
+            future: fLoadData,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done){
-                print('is_first_time: ' + snapshot.data.toString());
-                return _isFirstTime ? new OnBoarding(title: title,) : new MyHomePage(title: title,);
-//                return new OnBoarding(title: title,);
+                print('is_first_time: $_isFirstTime');
+                return _isFirstTime ? new OnBoarding() : new HomePage();
               }
 
               return new Center(
                 child: new CircularProgressIndicator(),
               );
             }
-        )
+        ),
+      )
     );
   }
 }

@@ -5,16 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'home.dart';
+import '../components/home/views/home_view.dart';
 import '../utils/colors.dart';
 import '../utils/functions.dart';
 
 
 class ConfigData extends StatefulWidget {
   ConfigData(
-      {Key key, this.title, this.isFromOnBoarding, this.isFromLogin})
+      {Key key, this.isFromOnBoarding, this.isFromLogin})
       : super(key: key);
-  final String title;
   final bool isFromOnBoarding;
   final bool isFromLogin;
 
@@ -91,11 +90,11 @@ class _ConfigDataState extends State<ConfigData> {
       prefs.setString('conexion_data', cnxDataStr);
 
       MaterialPageRoute route = MaterialPageRoute(
-        builder: (context) => MyHomePage(title: widget.title),
+        builder: (context) => HomePage(),
       );
       if (widget.isFromOnBoarding ?? false) {
         route = MaterialPageRoute(
-          builder: (context) => MyHomePage(title: widget.title),
+          builder: (context) => HomePage(),
         );
       }
       if (widget.isFromLogin ?? false) {
