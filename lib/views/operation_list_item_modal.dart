@@ -3,8 +3,9 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:bankdroid/models/phoneContact.dart';
 import 'package:flutter/services.dart';
-import 'package:simple_permissions/simple_permissions.dart';
-import 'package:sms/contact.dart';
+//import 'package:simple_permissions/simple_permissions.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:sms_maintained/contact.dart';
 import 'package:intl/intl.dart';
 //import 'package:contacts_service/contacts_service.dart';
 
@@ -140,9 +141,9 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
     Uint8List thumbnail = null;
 
     // Adding Chip Row:: Loading Contacts Data
-    var readContactsPermissionStatus = await getPermission(Permission.ReadContacts);
-    var writeContactsPermissionStatus = await getPermission(Permission.WriteContacts);
-    if (readContactsPermissionStatus == PermissionStatus.authorized) {
+//    var readContactsPermissionStatus = await getPermission(Permission.ReadContacts);
+    var readContactsPermissionStatus = await getPermission(Permission.contacts);
+    if (readContactsPermissionStatus == PermissionStatus.granted) {
 
       String phone = operation.observaciones.split(" ")[1];
       PhoneContact contact = await _findContactByPhone(phone, readContactsPermissionStatus);
@@ -206,7 +207,7 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
       : new Padding(    // CircleButton para agregar numero de tarjeta a Contactos o Inicial del Nombre del Contacto
         padding: const EdgeInsets.only(top: 5.0, bottom: 5.0, right: 5.0),
         child: new GestureDetector(
-          onTap: (){ chipText != obsContent ? null : _createOrEditContact(obsContent, chipCurrencyText, writeContactsPermissionStatus);},
+          onTap: (){ chipText != obsContent ? null : _createOrEditContact(obsContent, chipCurrencyText, readContactsPermissionStatus);},
           child: new CircleAvatar(
             maxRadius: 15.0,
             backgroundColor: Colors.grey.shade800,
@@ -284,7 +285,7 @@ Future<List<Widget>> getModalContentList(BuildContext context, Operation operati
 }
 
 void _createOrEditContact(String pan, String pan_label, PermissionStatus writeContactsPermissionStatus) {
-  if (writeContactsPermissionStatus == PermissionStatus.authorized) {
+  if (writeContactsPermissionStatus == PermissionStatus.granted) {
     var arguments = <String, dynamic>{
       'pan': pan,
       'pan_label': pan_label,
@@ -294,7 +295,7 @@ void _createOrEditContact(String pan, String pan_label, PermissionStatus writeCo
 }
 
 Future _findContactByPhone(String phone, PermissionStatus readContactsPermissionStatus) async {
-  if (readContactsPermissionStatus == PermissionStatus.authorized) {
+  if (readContactsPermissionStatus == PermissionStatus.granted) {
 
     // Search Contact Info by phone number
     var arguments = <String, dynamic>{
@@ -315,11 +316,11 @@ Future _findContactByPhone(String phone, PermissionStatus readContactsPermission
 
       // Busco el numero en el Profile
       var labelFound = "";
-      profile.addresses.forEach((label,value) {
-        if (value.toString().split(" ").join() == phone) {
-          labelFound = label.toString().substring(0,5) == "label" ? null : label;
-        }
-      });
+//      profile.addresses.forEach((label,value) {
+//        if (value.toString().split(" ").join() == phone) {
+//          labelFound = label.toString().substring(0,5) == "label" ? null : label;
+//        }
+//      });
 
       if (labelFound == ""){
         return new PhoneContact();

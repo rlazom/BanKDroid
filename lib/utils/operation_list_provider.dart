@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-import 'package:sms/sms.dart';
+import 'package:sms_maintained/sms.dart';
 
 import '../models/resumen.dart';
 import '../models/operation.dart';

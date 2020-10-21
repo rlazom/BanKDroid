@@ -3,15 +3,14 @@ import 'package:flutter/rendering.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:unicorndial/unicorndial.dart';
-import 'package:simple_permissions/simple_permissions.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sms/sms.dart';
+import 'package:sms_maintained/sms.dart';
 //--------------------------------
 import '../models/operation.dart';
 import '../utils/enums.dart';
 import '../utils/operation_list_provider.dart';
 import '../utils/ussd_methods.dart';
-import '../utils/permisions.dart';
 import '../models/resumen.dart';
 import 'resume_tab.dart';
 import 'menu_app_bar_button.dart';
@@ -35,8 +34,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
   SharedPreferences prefs;
 
-  ScrollController _hideButtonController = new ScrollController();
-  ScrollController _stickyScrollController = new ScrollController();
   TextEditingController filterCtrl = new TextEditingController();
   TabController tabController;
 
@@ -66,36 +63,29 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     super.initState();
 
     _loadSharedPreferences();
+    _requestPermissions();
 
-    new Timer(const Duration(seconds: 3), () {
-      requestPermissions([
-        Permission.CallPhone,
-        Permission.ReceiveSms,
-        Permission.ReadSms,
-        Permission.ReadContacts,
-      ]).then((_) {
-        getPermission(Permission.ReceiveSms).then((permissionStatus) {
-          if (permissionStatus == PermissionStatus.authorized) {
-            _initSMSListener();
-          }
-        });
-      });
-    });
 
     // Listeners
-    _initScrollListener();
     _initFilterListener();
     _initTabControllerListener();
   }
 
   @override
   void dispose() {
-    _stickyScrollController.dispose();
-    _hideButtonController.dispose();
     filterCtrl.dispose();
     tabController.dispose();
 
     super.dispose();
+  }
+
+  _requestPermissions() async {
+    await requestPermissions([Permission.phone, Permission.sms, Permission.contacts,]);
+    PermissionStatus smsPermission = await Permission.sms.request();
+
+    if (smsPermission == PermissionStatus.granted) {
+      _initSMSListener();
+    }
   }
 
   Future<Null> _handleRefresh() {
@@ -141,34 +131,20 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     }
     print("Solicitar Permisos + loading...");
 
-    String platformVersion = await SimplePermissions.platformVersion;
-    int mayorVersion = int.parse(platformVersion.split(' ')[1].split('.')[0]);
-    print(platformVersion);
-    print(mayorVersion);
-    print(mayorVersion < 6);
-
-    List resultValues = [];
+    List resultValues = new List();
     PermissionStatus resultValue;
 
-    if(mayorVersion < 6) {
-      permissionList.forEach((f) {
-        resultValues.add({'permission': f, 'permissionStatus':PermissionStatus.authorized});
-      });
+    for(Permission p in permissionList) {
+      resultValue = await p.request();
+      resultValues.add({'permission':p, 'permissionStatus':resultValue});
     }
-    else {
-      for(int i = 0; i < permissionList.length; i++){
-        Permission p = permissionList[i];
-        resultValue = await SimplePermissions.requestPermission(p);
-        resultValues.add({'permission':p, 'permissionStatus':resultValue});
-      }
-      print(resultValues);
-    }
+    print(resultValues);
 
     if(resultValues.isNotEmpty) {
-      if(resultValues.any((p) => p['permission'] == Permission.ReadSms)) {
+      if(resultValues.any((p) => p['permission'] == Permission.contacts)) {
         if(resultValues
-            .firstWhere((rv) => rv['permission'] == Permission.ReadSms)
-            ['permissionStatus'] == PermissionStatus.authorized) {
+            .firstWhere((rv) => rv['permission'] == Permission.contacts)
+            ['permissionStatus'] == PermissionStatus.granted) {
           print("Permitir SMS");
           setState(() {
             _canReadSMS = true;
@@ -195,12 +171,12 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       }
 
       if (resultValues
-          .any((p) => p['permission'] == Permission.CallPhone)) {
+          .any((p) => p['permission'] == Permission.phone)) {
         if (resultValues
             .firstWhere(
-                (rv) => rv['permission'] == Permission.CallPhone)
+                (rv) => rv['permission'] == Permission.phone)
             ['permissionStatus'] ==
-            PermissionStatus.authorized) {
+            PermissionStatus.granted) {
           setState(() {
             _canCall = true;
           });
@@ -266,7 +242,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               _resumenOperacionesCUC = new List<ResumeMonth>();
               _resumenOperacionesCUP = new List<ResumeMonth>();
 
-              requestPermissions([Permission.ReadSms]);
+              requestPermissions([Permission.sms]);
               new Timer(const Duration(seconds: 5), () {
                 if (_loading) {
                   setState(() {
@@ -276,42 +252,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               });
             });
           }
-        }
-      }
-    });
-  }
-
-  void _initScrollListener() {
-    _stickyScrollController.addListener(() {
-      if (_stickyScrollController.position.userScrollDirection == ScrollDirection.reverse) {
-        if(_isFABButtonVisible){
-          setState(() {
-            _isFABButtonVisible = false;
-          });
-        }
-      }
-      if (_stickyScrollController.position.userScrollDirection == ScrollDirection.forward) {
-        if(!_isFABButtonVisible){
-          setState(() {
-            _isFABButtonVisible = true;
-          });
-        }
-      }
-    });
-
-    _hideButtonController.addListener(() {
-      if (_hideButtonController.position.userScrollDirection == ScrollDirection.reverse) {
-        if(_isFABButtonVisible){
-          setState(() {
-            _isFABButtonVisible = false;
-          });
-        }
-      }
-      if (_hideButtonController.position.userScrollDirection == ScrollDirection.forward) {
-        if(!_isFABButtonVisible){
-          setState(() {
-            _isFABButtonVisible = true;
-          });
         }
       }
     });
@@ -463,7 +403,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
             MenuAppBar(
               canCall: _canCall,
               requestPermissions: () {
-                setState(() => requestPermissions([Permission.CallPhone]));
+                setState(() => requestPermissions([Permission.phone]));
               },
             ),
           ],
@@ -488,7 +428,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                 ),
                 FloatingActionButton(
                     onPressed: () {
-                      requestPermissions([Permission.ReadSms]);
+                      requestPermissions([Permission.sms]);
                     },
                     mini: true,
                     child: new Icon(
@@ -566,7 +506,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       lastOperationCUC: _operacionesCUC.isNotEmpty ? _operacionesCUC[0] : null,
       resumeOperationsCUP: _resumenOperacionesCUP,
       resumeOperationsCUC: _resumenOperacionesCUC,
-      hideButtonController: _hideButtonController,
     ));
 
     // TAB CUP / CUC
@@ -578,7 +517,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
             child: new OperationList(
               operaciones: _filteredCUP,
     //        operaciones: _operacionesCUP,
-              stickyListController: _stickyScrollController,
             ),
           ));
     }
@@ -590,7 +528,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
             child: new OperationList(
               operaciones: _filteredCUC,
     //        operaciones: _operacionesCUC,
-              stickyListController: _stickyScrollController,
             ),
           ));
     }
@@ -623,7 +560,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     }
     else {
       setState(() {
-        _stickyScrollController.jumpTo(0.0);
         _filteredCUP.addAll(filterOperations(_operacionesCUP));
         _filteredCUC.addAll(filterOperations(_operacionesCUC));
       });

@@ -17,7 +17,6 @@ class HomeDashboard extends StatefulWidget {
   final Operation lastOperationCUC;
   final List<ResumeMonth> resumeOperationsCUP;
   final List<ResumeMonth> resumeOperationsCUC;
-  final ScrollController hideButtonController;
 
   const HomeDashboard({
     this.conected,
@@ -27,7 +26,6 @@ class HomeDashboard extends StatefulWidget {
     this.lastOperationCUC,
     this.resumeOperationsCUP,
     this.resumeOperationsCUC,
-    this.hideButtonController,
   });
 
   @override
@@ -57,7 +55,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
     return Scrollbar(
       child: ListView(
-        controller: widget.hideButtonController,
         children: [
           new Column(
             children: dashboardWidgets,
