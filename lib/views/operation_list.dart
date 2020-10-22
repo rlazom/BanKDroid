@@ -6,16 +6,16 @@ import 'package:bankdroid/models/operation.dart';
 
 const Color monthTileBackground = Colors.white;
 
-class OperationList extends StatelessWidget {
-  final List<Operation> operaciones;
+class OperationListWdt extends StatelessWidget {
+  final List<Operation> operations;
 
-  const OperationList({
-    this.operaciones,
+  const OperationListWdt({
+    this.operations,
   });
 
   @override
   Widget build(BuildContext context) {
-    if(operaciones.isEmpty){
+    if(operations.isEmpty){
       return new Center(
         child: new ListView(
           shrinkWrap: true,
@@ -34,7 +34,7 @@ class OperationList extends StatelessWidget {
 
     return new Scrollbar(
       child: new ListView(
-        children: operaciones.map((op) => OperationListItem(operation: op,)).toList(),
+        children: operations.map((op) => OperationListItem(operation: op,)).toList(),
       ),
     );
   }

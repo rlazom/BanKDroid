@@ -9,7 +9,7 @@ import 'package:sms_maintained/contact.dart';
 import 'package:intl/intl.dart';
 //import 'package:contacts_service/contacts_service.dart';
 
-import '../utils/enums.dart';
+import '../common/enums.dart';
 import '../utils/permisions.dart';
 import '../models/operation.dart';
 
@@ -58,13 +58,13 @@ Future showOperationModal(BuildContext context, Operation operation) async {
               ),
             ],
           ),
-          content: Text("Pendiente") /*Expanded(child: SizedBox( child: new ListView.builder(
+          content: Flexible(child: SizedBox( child: new ListView.builder(
               physics: NeverScrollableScrollPhysics(),
               scrollDirection: Axis.vertical,
               shrinkWrap: true,
               itemBuilder: (BuildContext context,int index){ return listModalContentElements[index];}),
           )
-          )*/,
+          ),
         );
       });
 //  });

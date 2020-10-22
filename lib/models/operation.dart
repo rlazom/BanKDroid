@@ -1,4 +1,4 @@
-import '../utils/enums.dart';
+import '../common/enums.dart';
 
 class Operation {
   String idOperacion;

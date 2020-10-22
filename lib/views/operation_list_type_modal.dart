@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/operation.dart';
-import '../utils/colors.dart';
-import '../utils/enums.dart';
+import '../common/theme/colors.dart';
+import '../common/enums.dart';
 
 void showOperationsTypeModal(BuildContext context, List<Operation> operations){
-  List<Widget> listModalContentElements = getModalContentList(operations);
+  List<Widget> listModalContentElements = getModalContentList(context, operations);
 
   showDialog(
       context: context,
@@ -41,11 +41,12 @@ void showOperationsTypeModal(BuildContext context, List<Operation> operations){
       });
 }
 
-List<Widget> getModalContentList(List<Operation> operations) {
+List<Widget> getModalContentList(BuildContext context, List<Operation> operations) {
   List<Widget> listModalElements = new List<Widget>();
   DateTime fechaAnt = DateTime.now();
+  String localeStr = Localizations.localeOf(context).toString();
 
-  listModalElements.add(new Text(new DateFormat('MMMM yyyy').format(operations.first.fecha),textAlign: TextAlign.end,));
+  listModalElements.add(new Text(new DateFormat('MMMM yyyy', localeStr).format(operations.first.fecha),textAlign: TextAlign.end,));
   List<Operation> operationsSorted = operations..sort((a, b) => a.fecha.compareTo(b.fecha));
 
   operationsSorted.forEach((operation) {
@@ -54,7 +55,7 @@ List<Widget> getModalContentList(List<Operation> operations) {
       listModalElements.add(new Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          new Text(new DateFormat('EEEE d').format(operation.fecha).toString()),
+          new Text(new DateFormat('EEEE d', localeStr).format(operation.fecha).toString()),
         ],
       ));
       fechaAnt = operation.fecha;

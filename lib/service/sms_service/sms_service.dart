@@ -2,15 +2,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:sms_maintained/sms.dart';
 
-import '../models/resumen.dart';
-import '../models/operation.dart';
-import 'enums.dart';
+import '../../models/resumen.dart';
+import '../../models/operation.dart';
+import '../../common/enums.dart';
 
-class OperationListProvider {
+class SmsService {
   double saldoCUP;
   double saldoCUC;
 
-  Future<List<SmsMessage>> ReadSms() async {
+  Future<List<SmsMessage>> readSms() async {
     SmsQuery query = new SmsQuery();
     return await query.querySms(address: "PAGOxMOVIL");
   }
@@ -105,7 +105,7 @@ class OperationListProvider {
     operationsWithSaldo
         .removeWhere((op) => op.tipoOperacion == TipoOperacion.SALDO);
 
-    operationsWithSaldo = AgregarOperacionesAjustes(operationsWithSaldo);
+//    operationsWithSaldo = AgregarOperacionesAjustes(operationsWithSaldo);
 
     return operationsWithSaldo;
   }

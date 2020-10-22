@@ -1,5 +1,5 @@
+import 'package:bankdroid/common/theme/colors.dart';
 import 'package:flutter/material.dart';
-import 'colors.dart';
 
 enum TipoSms{
   CONSULTAR_ALL_ACCOUNTS,

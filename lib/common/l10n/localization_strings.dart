@@ -20,7 +20,7 @@ const String AppTitleText = 'app_title_text',
     GetDataFromCEErrorMessage = 'get_data_from_ce_error_message';
 
 final es = {
-  AppTitleText: 'Data Plan',
+  AppTitleText: 'BanKDroid',
 
   ToText: 'a',
   TheText: 'el',
@@ -44,7 +44,7 @@ final es = {
 };
 
 final en = {
-  AppTitleText: 'Data Plan',
+  AppTitleText: 'BanKDroid',
 
   ToText: 'to',
   TheText: 'the',

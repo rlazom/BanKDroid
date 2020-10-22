@@ -1,6 +1,15 @@
-import 'package:bankdroid/components/home/view_model/home_view_model.dart';
+import 'package:bankdroid/common/l10n/applocalizations.dart';
+import 'package:bankdroid/common/notifiers/operation_list.dart';
+import 'package:bankdroid/common/notifiers/view_model_consumer.dart';
+import 'package:bankdroid/module/home/components/home/view_model/home_view_model.dart';
+import 'package:bankdroid/module/home/components/resume_tab/view_model/resume_tab_view_model.dart';
+import 'package:bankdroid/module/home/components/resume_tab/views/resume_tab.dart';
+import 'package:bankdroid/views/operation_list.dart';
+//import 'package:bankdroid/module/home/view_model/home_view_model.dart';
+import 'package:easy_dynamic_theme/easy_dynamic_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -9,14 +18,14 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sms_maintained/sms.dart';
 //--------------------------------
-import '../../../models/operation.dart';
-import '../../../utils/enums.dart';
-import '../../../utils/operation_list_provider.dart';
-import '../../../utils/ussd_methods.dart';
-import '../../../models/resumen.dart';
-import '../../../views/resume_tab.dart';
-import '../../../views/menu_app_bar_button.dart';
-import '../../../views/operation_list.dart';
+//import '../../../models/operation.dart';
+//import '../../../common/enums.dart';
+//import '../../../service/sms_service/sms_service.dart';
+//import '../../../utils/ussd_methods.dart';
+//import '../../../models/resumen.dart';
+//import '../../../views/resume_tab.dart';
+//import '../../../views/menu_app_bar_button.dart';
+//import '../../../views/operation_list.dart';
 
 // External packages
 
@@ -39,29 +48,51 @@ import '../../../views/operation_list.dart';
 class HomePage extends StatelessWidget {
   final GlobalKey<ScaffoldState> _homeScaffoldKey = new GlobalKey<ScaffoldState>();
 
-  Widget _buildTabPage(int index) {
+  Widget _buildTabPage(BuildContext context, HomeViewModel viewModel) {
+    var operationListProvider = Provider.of<OperationList>(context, listen: false);
+
     List pages = [
-      Center(child: Icon(Icons.contacts),),
-      Center(child: Icon(Icons.format_list_numbered),),
+//      Center(child: Icon(Icons.contacts),),
+      ResumeTab(),
+//      Center(child: Icon(Icons.format_list_numbered),),
+      OperationListWdt(operations: operationListProvider.listCup,),
+      OperationListWdt(operations: operationListProvider.listCuc,),
       Center(child: Icon(Icons.format_list_bulleted),),
     ];
-    return pages.elementAt(index);
+//    return pages.elementAt(viewModel(context).currentIndex);
+    return pages.elementAt(viewModel.currentIndex);
+//    return ValueListenableBuilder<int>(
+//      valueListenable: viewModel.currentIndex,
+//      builder: (context, currentIndex, child) {
+//        return pages.elementAt(currentIndex);
+//      },
+//    );
   }
 
   List<BottomNavigationBarItem> _buildBottomNavBarItems() {
     return <BottomNavigationBarItem>[
-      BottomNavigationBarItem(icon: Icon(Icons.contacts), label: ''),
-      BottomNavigationBarItem(icon: Icon(Icons.format_list_numbered), label: 'CUP'),
-      BottomNavigationBarItem(icon: Icon(Icons.format_list_bulleted), label: 'CUC'),
+      BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: ''),
+      BottomNavigationBarItem(icon: Icon(Icons.credit_card), label: 'CUP'),
+      BottomNavigationBarItem(icon: Icon(Icons.credit_card), label: 'CUC'),
     ];
   }
 
-  _buildBottomNavBar(HomeViewModel viewModel) {
+  _buildBottomNavBar(BuildContext context, HomeViewModel viewModel) {
     return BottomNavigationBar(
       currentIndex: viewModel.currentIndex,
       items: _buildBottomNavBarItems(),
       onTap: (int newIndex) => viewModel.updateIndex(newIndex: newIndex),
     );
+//    return ValueListenableBuilder<int>(
+//      valueListenable: viewModel.currentIndex,
+//      builder: (context, currentIndex, child) {
+//        return BottomNavigationBar(
+//          currentIndex: currentIndex,
+//          items: _buildBottomNavBarItems(),
+//          onTap: (int newIndex) => viewModel.loading ? null : (){viewModel.updateIndex(newIndex: newIndex);},
+//        );
+//      },
+//    );
   }
 
 //  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKeyCup = new GlobalKey<RefreshIndicatorState>();
@@ -354,7 +385,7 @@ class HomePage extends StatelessWidget {
 //    _filteredCUP = new List<Operation>();
 //    _filteredCUC = new List<Operation>();
 //
-////    setState(() {
+//    setState(() {
 //    _operacionesCUP.addAll(
 //        operaciones.where((o) => o.moneda == MONEDA.CUP).toList());
 //    print("OnLoadedCUP_OperationList");
@@ -661,19 +692,55 @@ class HomePage extends StatelessWidget {
     return HomeViewModel(homeScaffoldKey: _homeScaffoldKey);
   }
 
+  void _scheduleLoadService(BuildContext context, HomeViewModel viewModel) {
+    SchedulerBinding.instance.addPostFrameCallback((timeStamp) async {
+//      await viewModel(context).loadData(context);
+      await viewModel.loadData(context);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    var localization = Localization.of(context);
+
     return ChangeNotifierProvider(
       create: _createViewModel,
       child: Consumer<HomeViewModel>(
         builder: (context, viewModel, child) {
+          var localization = Localization.of(context);
+
+          if(viewModel.normal) {
+            _scheduleLoadService(context, viewModel);
+            return Center(child: CircularProgressIndicator());
+          }
+          if(viewModel.loading) {
+            return Center(child: CircularProgressIndicator());
+          }
           return new Scaffold(
             key: _homeScaffoldKey,
-            body: _buildTabPage(viewModel.currentIndex),
-            bottomNavigationBar: _buildBottomNavBar(viewModel),
+            appBar: AppBar(
+              title: new Text('${localization.appTitleText}'),
+              actions: [
+                EasyDynamicThemeBtn(),
+              ],
+            ),
+//            body: _buildTabPage(context),
+            body: _buildTabPage(context, viewModel),
+            bottomNavigationBar: _buildBottomNavBar(context, viewModel),
           );
         },
       ),
+//      child: new Scaffold(
+//        key: _homeScaffoldKey,
+//        appBar: AppBar(
+//          title: new Text('${localization.appTitleText}'),
+//          actions: [
+//            EasyDynamicThemeBtn(),
+//          ],
+//        ),
+//        body: _buildTabPage(context),
+//        bottomNavigationBar: _buildBottomNavBar(context),
+//      ),
     );
   }
 }

@@ -1,12 +1,11 @@
 import 'dart:async';
+import 'package:bankdroid/common/theme/colors.dart';
+import 'package:bankdroid/module/home/components/home/views/home_view.dart';
+import 'package:bankdroid/views/config.dart';
 import 'package:flutter/material.dart';
 import 'package:intro_views_flutter/Models/page_view_model.dart';
 import 'package:intro_views_flutter/intro_views_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../home/views/home_view.dart';
-import '../../views/config.dart';
-import '../../utils/colors.dart';
 
 
 class OnBoarding extends StatefulWidget {

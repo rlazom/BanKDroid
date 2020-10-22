@@ -1,5 +1,5 @@
 import 'operation.dart';
-import '../utils/enums.dart';
+import '../common/enums.dart';
 
 class ResumeTypeOperation{
   TipoOperacion tipoOperacion;

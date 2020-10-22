@@ -1,99 +1,108 @@
+import 'package:bankdroid/common/enums.dart';
+import 'package:bankdroid/common/l10n/applocalizations.dart';
+import 'package:bankdroid/common/notifiers/operation_list.dart';
+import 'package:bankdroid/common/notifiers/view_model_consumer.dart';
+import 'package:bankdroid/common/theme/colors.dart';
+import 'package:bankdroid/common/widgets/operation_modal_item.dart';
+import 'package:bankdroid/models/operation.dart';
+import 'package:bankdroid/models/resumen.dart';
+import 'package:bankdroid/module/home/components/resume_tab/view_model/resume_tab_view_model.dart';
+import 'package:bankdroid/views/operation_list_item_modal.dart';
+import 'package:bankdroid/views/operation_list_type_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
-import 'operation_list_item_modal.dart';
-import 'operation_list_type_modal.dart';
-import '../models/resumen.dart';
-import '../models/operation.dart';
-import '../utils/ussd_methods.dart';
-import '../utils/colors.dart';
-import '../utils/enums.dart';
+//import '../../../../views/operation_list_item_modal.dart';
+//import '../../../../views/operation_list_type_modal.dart';
+//import '../../../../models/resumen.dart';
+//import '../../../../models/operation.dart';
+//import '../../../../utils/ussd_methods.dart';
+//import '../../../../common/theme/colors.dart';
+//import '../../../../common/enums.dart';
 
-class HomeDashboard extends StatefulWidget {
-  final bool conected;
-  final double saldoCUP;
-  final double saldoCUC;
-  final Operation lastOperationCUP;
-  final Operation lastOperationCUC;
-  final List<ResumeMonth> resumeOperationsCUP;
-  final List<ResumeMonth> resumeOperationsCUC;
+class ResumeTab extends StatelessWidget with ViewModelConsumer<ResumeTabViewModel> {
+  final GlobalKey<ScaffoldState> _resumeTabScaffoldKey = new GlobalKey<ScaffoldState>();
+//  final bool conected;
+//  final double saldoCUP;
+//  final double saldoCUC;
+//  final Operation lastOperationCUP;
+//  final Operation lastOperationCUC;
+//  final List<ResumeMonth> resumeOperationsCUP;
+//  final List<ResumeMonth> resumeOperationsCUC;
 
-  const HomeDashboard({
-    this.conected,
-    this.saldoCUP,
-    this.saldoCUC,
-    this.lastOperationCUP,
-    this.lastOperationCUC,
-    this.resumeOperationsCUP,
-    this.resumeOperationsCUC,
-  });
+//  ResumeTab({Key key, this.conected, this.saldoCUP, this.saldoCUC, this.lastOperationCUP, this.lastOperationCUC, this.resumeOperationsCUP, this.resumeOperationsCUC}) : super(key: key);
+  ResumeTab({Key key}) : super(key: key);
 
-  @override
-  _HomeDashboardState createState() => new _HomeDashboardState();
-}
+  ResumeTabViewModel _createViewModel(BuildContext context) {
+    return ResumeTabViewModel(resumeTabScaffoldKey: _resumeTabScaffoldKey);
+  }
 
-class _HomeDashboardState extends State<HomeDashboard> {
-  bool isCurrencyCUP = true;
+  void _scheduleLoadService(BuildContext context) {
+    SchedulerBinding.instance.addPostFrameCallback((timeStamp) async {
+      await viewModel(context).loadData(context);
+    });
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  _buildDashboard(BuildContext context) {
     List<Widget> dashboardWidgets = new List<Widget>();
-    int cantLists = (widget.saldoCUP != null ? 1 : 0) + (widget.saldoCUC != null ? 1 : 0);
+    int cantLists = (viewModel(context).balanceCUP != null ? 1 : 0) + (viewModel(context).balanceCUC != null ? 1 : 0);
 
-    if (widget.lastOperationCUP != null || widget.lastOperationCUC != null || cantLists != 0) {
-      dashboardWidgets.addAll(generateDashBoardWidgets(cantLists));
+    if (viewModel(context).lastOperationCUP != null || viewModel(context).lastOperationCUC != null || cantLists != 0) {
+      dashboardWidgets.addAll(generateDashBoardWidgets(context, cantLists));
     } else {
       dashboardWidgets.addAll(generateListNoSMSData());
-
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: dashboardWidgets,
-        ),
-      );
     }
+    return dashboardWidgets;
+  }
 
-    return Scrollbar(
-      child: ListView(
-        children: [
-          new Column(
-            children: dashboardWidgets,
-          )
-        ],
+  List<Widget> generateListNoSMSData() {
+    return [
+      new Icon(
+        Icons.speaker_notes_off,
+        size: 50.0,
+        color: Colors.black54,
       ),
-    );
+      new Text("Sin Datos en sus SMS"),
+      new Padding(
+        padding: const EdgeInsets.only(bottom: 10.0),
+//        child: new Text(conected ? "Click Aqui " : "Conéctese " + "para solicitar Ultimas Operaciones"),
+        child: new Text(true ? "Click Aqui " : "Conéctese " + "para solicitar Ultimas Operaciones"),
+      ),
+      new FloatingActionButton(
+//          onPressed: conected ? callUltimasOperaciones : null,
+          onPressed: true ? (){} : null,
+          backgroundColor: true ? Colors.blue : Colors.grey,
+          mini: true,
+          child: new Icon(
+            Icons.refresh,
+          )),
+    ];
   }
 
-  void onToggleCurrency() {
-    if ((this.isCurrencyCUP && widget.saldoCUC != null) ||
-        (!this.isCurrencyCUP && widget.saldoCUP != null)) {
-      setState(() {
-        this.isCurrencyCUP = !this.isCurrencyCUP;
-      });
-    }
-  }
-
-  List<Widget> generateDashBoardWidgets(int cantLists){
+  List<Widget> generateDashBoardWidgets(BuildContext context, int cantLists) {
     List<Widget> dashboardWidgets = new List<Widget>();
 
+    bool isCurrencyCUP = viewModel(context).isCurrencyCUP;
     dashboardWidgets.add(
         SaldoActual(
-          saldo: isCurrencyCUP ? widget.saldoCUP : widget.saldoCUC,
+          saldo: isCurrencyCUP ? viewModel(context).balanceCUP : viewModel(context).balanceCUC,
           lastOp: isCurrencyCUP
-              ? widget.lastOperationCUP != null
-              ? widget.lastOperationCUP
+              ? viewModel(context).lastOperationCUP != null
+              ? viewModel(context).lastOperationCUP
               : null
-              : widget.lastOperationCUC != null
-              ? widget.lastOperationCUC
+              : viewModel(context).lastOperationCUC != null
+              ? viewModel(context).lastOperationCUC
               : null,
           moneda: isCurrencyCUP ? MONEDA.CUP : MONEDA.CUC,
           cantLists: cantLists,
-          onToggleCurrency: onToggleCurrency,
+          onToggleCurrency: viewModel(context).toggleCurrency,
         ));
 
     List<ResumeMonth> resume = isCurrencyCUP
-        ? widget.resumeOperationsCUP
-        : widget.resumeOperationsCUC;
+        ? viewModel(context).resumeOperationsCUP
+        : viewModel(context).resumeOperationsCUC;
 
     if(resume.isNotEmpty) {
       resume.forEach((resumenMensual) {
@@ -108,28 +117,51 @@ class _HomeDashboardState extends State<HomeDashboard> {
     }
     return dashboardWidgets;
   }
-  List<Widget> generateListNoSMSData(){
-    return [
-      new Icon(
-        Icons.speaker_notes_off,
-        size: 50.0,
-        color: Colors.black54,
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: _resumeTabScaffoldKey,
+      body: ChangeNotifierProvider(
+        create: _createViewModel,
+        child: Consumer<ResumeTabViewModel>(
+          builder: (context, viewModel, child) {
+            var localization = Localization.of(context);
+
+            if(viewModel.normal) {
+              _scheduleLoadService(context);
+              return Center(child: CircularProgressIndicator());
+            }
+            if(viewModel.loading) {
+              return Center(child: CircularProgressIndicator());
+            }
+            return new Scrollbar(
+              child: ListView(
+                children: [
+                  new Column(
+                    children: _buildDashboard(context),
+                  )
+                ],
+              ),
+            );
+//            return new Consumer<OperationList>(
+//              builder: (context, opViewModel, child) {
+//
+//                return new Scrollbar(
+//                  child: ListView(
+//                    children: [
+//                      new Column(
+//                        children: _buildDashboard(viewModel),
+//                      )
+//                    ],
+//                  ),
+//                );
+//              },
+//            );
+          },
+        ),
       ),
-      new Text("Sin Datos en sus SMS"),
-      new Padding(
-        padding: const EdgeInsets.only(bottom: 10.0),
-        child: new Text(widget.conected
-            ? "Click Aqui "
-            : "Conéctese " + "para solicitar Ultimas Operaciones"),
-      ),
-      new FloatingActionButton(
-          onPressed: widget.conected ? callUltimasOperaciones : null,
-          backgroundColor: widget.conected ? Colors.blue : Colors.grey,
-          mini: true,
-          child: new Icon(
-            Icons.refresh,
-          )),
-    ];
+    );
   }
 }
 
@@ -147,6 +179,18 @@ class SaldoActual extends StatelessWidget {
     this.cantLists,
     this.lastOp,
   });
+
+  _showOperationDetails(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => SimpleDialog(
+        contentPadding: const EdgeInsets.all(16.0),
+        children: [
+          OperationModalItem(operation: lastOp,),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +216,8 @@ class SaldoActual extends StatelessWidget {
                 style: TextStyle(fontSize: 30.0),
               ),
               new FlatButton(
-                onPressed: () => showOperationModal(context, lastOp),
+//                onPressed: () => showOperationModal(context, lastOp),
+                onPressed: () => _showOperationDetails(context),
                 child: new Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -394,7 +439,7 @@ class OperacionGastoIngresoListItem extends StatelessWidget {
     return new Card(
       child: new InkWell(
         borderRadius: BorderRadius.all(Radius.circular(4.0)),
-        onTap: () => showOperationsTypeModal(context,operations),
+        onTap: () => showOperationsTypeModal(context, operations),
         child: new Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

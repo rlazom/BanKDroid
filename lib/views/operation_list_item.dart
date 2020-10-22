@@ -1,8 +1,10 @@
+import 'dart:ui';
+
+import 'package:bankdroid/common/widgets/operation_modal_item.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'operation_list_item_modal.dart';
-import '../utils/enums.dart';
+import '../common/enums.dart';
 import '../models/operation.dart';
 
 class OperationListItem extends StatelessWidget {
@@ -12,15 +14,28 @@ class OperationListItem extends StatelessWidget {
     this.operation,
   });
 
+  _showOperationDetails(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => SimpleDialog(
+        contentPadding: const EdgeInsets.all(16.0),
+        children: [
+          OperationModalItem(operation: operation,),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    String localeStr = Localizations.localeOf(context).toString();
     return Column(
       children: [
         new ListTile(
           leading: new Icon(getIconData(operation.tipoOperacion),
               color: Colors.grey, size: 40.0),
           title: new Text(getOperationTitle(operation.tipoOperacion)),
-          subtitle: new Text(new DateFormat('EEE, d MMM yyyy').format(operation.fecha)),
+          subtitle: new Text(new DateFormat('EEEE, d MMMM yyyy', localeStr).format(operation.fecha)),
           trailing: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -39,12 +54,16 @@ class OperationListItem extends StatelessWidget {
               new Text(
                 operation.saldo.toStringAsFixed(2),
                 style: TextStyle(
-                  color: operation.isSaldoReal ? Colors.black : Colors.black38,
+                  fontWeight: operation.isSaldoReal ? FontWeight.bold : FontWeight.normal,
+                  color: operation.isSaldoReal
+                      ? Theme.of(context).textTheme.bodyText2.color
+                      : Theme.of(context).textTheme.bodyText2.color.withOpacity(0.4)
                 ),
               ),
             ],
           ),
-          onTap: () => showOperationModal(context, operation),
+//          onTap: () => showOperationModal(context, operation),
+          onTap: () => _showOperationDetails(context),
         ),
         new Divider(
           height: 0.0,
