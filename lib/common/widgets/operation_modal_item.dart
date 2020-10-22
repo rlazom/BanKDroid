@@ -95,7 +95,7 @@ class OperationModalItem extends StatelessWidget {
               getMonedaStr(operation.moneda),
           style: TextStyle(
             color: operation.isSaldoReal 
-              ? Theme.of(context).textTheme.bodyText2.color,
+              ? Theme.of(context).textTheme.bodyText2.color
               : Theme.of(context).textTheme.bodyText2.color.withOpacity(0.4),
           ),
         ),
