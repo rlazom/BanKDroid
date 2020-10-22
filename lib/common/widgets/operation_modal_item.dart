@@ -12,7 +12,7 @@ class OperationModalItem extends StatelessWidget {
 
   const OperationModalItem({Key key, this.operation}) : super(key: key);
 
-  _buildTitle() {
+  _buildTitle(BuildContext context) {
     return Column(
       children: [
         new Row(
@@ -33,7 +33,7 @@ class OperationModalItem extends StatelessWidget {
           operation.idOperacion,
           style: TextStyle(
             fontSize: 14.0,
-            color: Colors.black38,
+            color: Theme.of(context).textTheme.bodyText2.color.withOpacity(0.4),
           ),
         ),
       ],
@@ -46,16 +46,8 @@ class OperationModalItem extends StatelessWidget {
     return new Column(
       children: listModalContentElements,
     );
-//    return new ListView.builder(
-//        physics: NeverScrollableScrollPhysics(),
-//        scrollDirection: Axis.vertical,
-//        shrinkWrap: true,
-//        itemBuilder: (BuildContext context,int index) {
-//          return listModalContentElements.elementAt(index);
-//        });
   }
 
-//  Future<List<Widget>> getModalContentList(BuildContext context, Operation operation) {
   List<Widget> getModalContentList(BuildContext context, Operation operation) {
     List<Widget> listModalContentElements = new List<Widget>();
     String localeStr = Localizations.localeOf(context).toString();
@@ -68,7 +60,6 @@ class OperationModalItem extends StatelessWidget {
     listDateTimeElements.addAll([
       new Icon(
         Icons.date_range,
-        color: Colors.black54,
       ),
       new Text(fecha)
     ]);
@@ -103,7 +94,9 @@ class OperationModalItem extends StatelessWidget {
               " " +
               getMonedaStr(operation.moneda),
           style: TextStyle(
-            color: operation.isSaldoReal ? Colors.black : Colors.black38,
+            color: operation.isSaldoReal 
+              ? Theme.of(context).textTheme.bodyText2.color,
+              : Theme.of(context).textTheme.bodyText2.color.withOpacity(0.4),
           ),
         ),
       ],
@@ -276,7 +269,7 @@ class OperationModalItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return new Column(
       children: [
-        _buildTitle(),
+        _buildTitle(context),
         _buildBody(context),
       ],
     );
