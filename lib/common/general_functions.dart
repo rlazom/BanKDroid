@@ -20,3 +20,7 @@ String normalizeText(String rawText){
 
   return finalText;
 }
+
+String capitalize(String val) {
+  return '${val[0].toUpperCase()}${val.substring(1)}';
+}

@@ -1,4 +1,5 @@
 import 'package:bankdroid/common/enums.dart';
+import 'package:bankdroid/common/general_functions.dart';
 import 'package:bankdroid/common/l10n/applocalizations.dart';
 import 'package:bankdroid/common/notifiers/operation_list.dart';
 import 'package:bankdroid/common/notifiers/view_model_consumer.dart';
@@ -9,6 +10,7 @@ import 'package:bankdroid/models/resumen.dart';
 import 'package:bankdroid/module/home/components/resume_tab/view_model/resume_tab_view_model.dart';
 import 'package:bankdroid/views/operation_list_item_modal.dart';
 import 'package:bankdroid/views/operation_list_type_modal.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
@@ -225,7 +227,7 @@ class SaldoActual extends StatelessWidget {
                       getMonedaStr(moneda),
                       style: TextStyle(
                         fontSize: 15.0,
-                        color: Colors.black54,
+//                        color: Colors.black54,
                       ),
                     ),
                     Row(
@@ -291,7 +293,7 @@ class ResumenMensual extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Widget> resumeList = new List<Widget>();
 
-    resumeList.add(generateResumeCard());
+    resumeList.add(generateResumeCard(context));
     resumeList.addAll(generateResumeListTiposOperations());
     resumeList.add(
       new Divider(
@@ -307,7 +309,9 @@ class ResumenMensual extends StatelessWidget {
     );
   }
 
-  Card generateResumeCard() {
+  Card generateResumeCard(BuildContext context) {
+    String localeStr = Localizations.localeOf(context).toString();
+
     return new Card(
       child: new Column(
         children: [
@@ -317,10 +321,20 @@ class ResumenMensual extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 new Expanded(
-                    child: new Text(new DateFormat('MMMM yyyy').format(fecha),
-                        style: TextStyle(color: Colors.black54))),
-                new Text((ingresos - gastos).abs().toStringAsFixed(2),
-                    style: TextStyle(color: Colors.black54, fontSize: 11.0)),
+                    child: new Text(
+                      capitalize(new DateFormat('MMMM yyyy', localeStr).format(fecha)),
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    )
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: new Text((ingresos - gastos).abs().toStringAsFixed(2),
+                      style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyText2.color.withOpacity(0.4),
+                          fontSize: 11.0
+                      )
+                  ),
+                ),
                 new Icon(
                   ingresos - gastos == 0
                       ? Icons.trending_flat
