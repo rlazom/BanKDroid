@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:call_number/call_number.dart';
+//import 'package:call_number/call_number.dart';
 
 callConectarse() {
   _initCall("*444*40*03%23");
@@ -23,5 +23,5 @@ callUltimasOperaciones() {
 }
 
 _initCall(String number) async {
-  if (number != null) await new CallNumber().callNumber(number);
+//  if (number != null) await new CallNumber().callNumber(number);
 }

@@ -1,33 +1,13 @@
 import 'package:bankdroid/common/l10n/applocalizations.dart';
 import 'package:bankdroid/common/notifiers/operation_list.dart';
-import 'package:bankdroid/common/notifiers/view_model_consumer.dart';
 import 'package:bankdroid/module/home/components/home/view_model/home_view_model.dart';
-import 'package:bankdroid/module/home/components/resume_tab/view_model/resume_tab_view_model.dart';
 import 'package:bankdroid/module/home/components/resume_tab/views/resume_tab.dart';
 import 'package:bankdroid/views/operation_list.dart';
-//import 'package:bankdroid/module/home/view_model/home_view_model.dart';
 import 'package:easy_dynamic_theme/easy_dynamic_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
-import 'dart:async';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:unicorndial/unicorndial.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sms_maintained/sms.dart';
-//--------------------------------
-//import '../../../models/operation.dart';
-//import '../../../common/enums.dart';
-//import '../../../service/sms_service/sms_service.dart';
-//import '../../../utils/ussd_methods.dart';
-//import '../../../models/resumen.dart';
-//import '../../../views/resume_tab.dart';
-//import '../../../views/menu_app_bar_button.dart';
-//import '../../../views/operation_list.dart';
 
-// External packages
 
 //class HomePage extends StatelessWidget {
 //  @override

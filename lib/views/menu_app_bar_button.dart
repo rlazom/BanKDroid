@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:call_number/call_number.dart';
+//import 'package:call_number/call_number.dart';
 import 'package:package_info/package_info.dart';
 import 'package:flutter/material.dart';
 //import 'package:http/http.dart' as http;
@@ -78,9 +78,9 @@ class MenuAppBar extends StatelessWidget {
     );
   }
 
-  _initCall(String number) async {
-    if (number != null) await new CallNumber().callNumber(number);
-  }
+//  _initCall(String number) async {
+//    if (number != null) await new CallNumber().callNumber(number);
+//  }
 }
 
 class JsonObject{
