@@ -50,8 +50,9 @@ class Operation {
   }
 
   TipoOperacion getTipoOperacion(String cadena, NaturalezaOperacion naturaleza) {
-    String idOperacion = cadena.split(" ")[0];
-    String idTransaccion = cadena.split(" ")[1].substring(0,2);
+    var cadenaArr = cadena.split(" ");
+    String idOperacion = cadenaArr.first;
+    String idTransaccion = cadenaArr[1].substring(0,2);
 
     TipoOperacion tipoServicio = TipoOperacion.DEFAULT;
     if (cadena != null) {
@@ -65,7 +66,7 @@ class Operation {
         tipoServicio = TipoOperacion.AGUA;
       else if (idOperacion == "RECA" || cadena.contains("recarga") || idOperacion == "MREC")
         tipoServicio = TipoOperacion.RECARGA_MOVIL;
-      else if (idOperacion == "UU")
+      else if (idOperacion == "UU" || (idOperacion == "ACRED" && idTransaccion == 'EB'))
         tipoServicio = TipoOperacion.AJUSTE;
       else if (idOperacion == "YY" && idTransaccion == "YY")    // TRANSFERENCIA ATM
         tipoServicio = TipoOperacion.TRANSFERENCIA;
@@ -77,7 +78,7 @@ class Operation {
         tipoServicio = TipoOperacion.SALARIO;
       else if ((idOperacion == "EV" || idTransaccion == "EV") && naturaleza == NaturalezaOperacion.DEBITO)
         tipoServicio = TipoOperacion.DESCUENTO_NOMINA;
-      else if (idOperacion == "TL")
+      else if (idOperacion == 'TL' || idTransaccion == 'TL')
         tipoServicio = TipoOperacion.OP_VENTANILLA;
       else if (idOperacion == "EB")
         tipoServicio = TipoOperacion.JUBILACION;
@@ -87,11 +88,19 @@ class Operation {
         tipoServicio = TipoOperacion.POS;
       else if (idOperacion == "AGUA" && idTransaccion == "MM")
         tipoServicio = TipoOperacion.AGUA;
+      else if (idOperacion == "GAS" && idTransaccion == "MM")
+        tipoServicio = TipoOperacion.GAS;
+      else if (idOperacion == "CNAU" && idTransaccion == "MM")
+        tipoServicio = TipoOperacion.NAUTA;
+      else if ((idOperacion == "CIMX" || idOperacion == "CARI") && idTransaccion == "MM")
+        tipoServicio = TipoOperacion.TU_ENVIO;
+      else if (idOperacion == "ONAT" && idTransaccion == "YY")
+        tipoServicio = TipoOperacion.ONAT;
       else if (idOperacion == "ENZONA" ||idOperacion == "ZZ" || idTransaccion == "ZZ")
         tipoServicio = TipoOperacion.ENZONA;
     }
     if(tipoServicio == TipoOperacion.DEFAULT){
-      print('NO SE ENCONTRO UNA OPERACION. $cadena $naturaleza');
+      print('NO SE ENCONTRO UNA OPERACION. idOperacion: "$idOperacion", idTransaccion: "$idTransaccion", cadena: "$cadena", naturaleza: "$naturaleza"');
     }
     return tipoServicio;
   }
@@ -123,7 +132,6 @@ class Operation {
       }
       catch (e){
         print(e.toString());
-        var a = e;
       }
       // ? lines.replaceAll('\r','').split("\n").map((item) => item.trim()).toList()
       var items = lines.indexOf(';') == -1
@@ -139,7 +147,6 @@ class Operation {
         );
       } catch(e){
         print(e.toString());
-        var a = e;
       }
       if (date.isAfter(smsDate)) {
         date = smsDate;
@@ -193,9 +200,23 @@ class Operation {
         operation.observaciones = "Factura: " + factura;
         operation.importe = double.parse(lines[2].trim().split(" ")[2].trim());
         operation.naturaleza = NaturalezaOperacion.DEBITO;
-        operation.tipoOperacion = getTipoOperacion(lines[0], operation.naturaleza);
+        if(lines[0].toString().contains('Banco Metropolitano:  El pago de la factura del Gas fue completado')) {
+          operation.tipoOperacion = getTipoOperacion('GAS ' + lines[3].toString().split(' ')[3].trim(), operation.naturaleza);
+        } else {
+          operation.tipoOperacion = getTipoOperacion(lines[0], operation.naturaleza);
+        }
         operation.moneda = getMoneda(lines[2].trim().split(" ")[3].trim());
-        operation.saldo = double.parse(lines[4].trim().split(" ")[3].trim());
+        try {
+          for (String line in lines) {
+            if (line.toLowerCase().contains('saldo disponible:')) {
+              operation.saldo = double.parse(line.trim().split(" ")[3].trim());
+              break;
+            }
+          }
+        } catch (e) {
+          print('ERROR en operation.saldo');
+          operation.saldo = 0.00;
+        }
         operation.isSaldoReal = true;
       }
       else if (tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO) {

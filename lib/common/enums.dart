@@ -37,11 +37,15 @@ enum TipoOperacion{
   ELECTRICIDAD,
   TELEFONO,
   AGUA,
+  GAS,
   MULTA,
   AJUSTE,
   POS,
   MISSING,
   ENZONA,
+  TU_ENVIO,
+  NAUTA,
+  ONAT,
   DEFAULT,
 }
 
@@ -62,11 +66,15 @@ IconData getIconData(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.TELEFONO ? Icons.phone
       : tipoOperacion == TipoOperacion.ELECTRICIDAD ? Icons.power
       : tipoOperacion == TipoOperacion.AGUA ? Icons.opacity
+      : tipoOperacion == TipoOperacion.GAS ? Icons.whatshot
+      : tipoOperacion == TipoOperacion.TU_ENVIO ? Icons.shopping_cart
+      : tipoOperacion == TipoOperacion.NAUTA ? Icons.router
+      : tipoOperacion == TipoOperacion.ONAT ? Icons.account_balance
       : tipoOperacion == TipoOperacion.INTERES ? Icons.payment
       : tipoOperacion == TipoOperacion.TRANSFERENCIA ? Icons.compare_arrows
       : tipoOperacion == TipoOperacion.RECARGA_MOVIL ? Icons.phone_android
       : tipoOperacion == TipoOperacion.OP_VENTANILLA ? Icons.account_balance
-      : tipoOperacion == TipoOperacion.POS ? Icons.shopping_cart
+      : tipoOperacion == TipoOperacion.POS ? Icons.shopping_basket
       : tipoOperacion == TipoOperacion.SALARIO ? Icons.work
       : tipoOperacion == TipoOperacion.JUBILACION ? Icons.work
       : tipoOperacion == TipoOperacion.DESCUENTO_NOMINA ? Icons.work
@@ -97,6 +105,10 @@ String getOperationTitle(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.MULTA ? "Multa"
       : tipoOperacion == TipoOperacion.AJUSTE ? "Ajuste"
       : tipoOperacion == TipoOperacion.AGUA ? "Factura Agua"
+      : tipoOperacion == TipoOperacion.GAS ? 'Factura Gas'
+      : tipoOperacion == TipoOperacion.TU_ENVIO ? 'Tu Envio'
+      : tipoOperacion == TipoOperacion.NAUTA ? 'Nauta'
+      : tipoOperacion == TipoOperacion.ONAT ? 'ONAT'
       : tipoOperacion == TipoOperacion.ENZONA ? "En Zona"
       : "Desconocido";
 }
