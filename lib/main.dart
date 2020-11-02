@@ -32,25 +32,25 @@ class BankDroidApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-      title: 'BanKDroid',
-      localizationsDelegates: [
-        const LocalizationDelegate(),
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      supportedLocales: [
-        const Locale('en', ''),
-        const Locale('es', ''),
-      ],
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: EasyDynamicTheme.of(context).themeMode,
-      home: MultiProvider(
-        providers: providers,
-        child: new FutureBuilder(
+    return MultiProvider(
+      providers: providers,
+      child: new MaterialApp(
+        title: 'BanKDroid',
+        localizationsDelegates: [
+          const LocalizationDelegate(),
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        supportedLocales: [
+          const Locale('en', ''),
+          const Locale('es', ''),
+        ],
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: EasyDynamicTheme.of(context).themeMode,
+        home: new FutureBuilder(
             future: fLoadData,
-            builder: (context, snapshot) {
+            builder: (futureBuilderContext, snapshot) {
               if (snapshot.connectionState == ConnectionState.done){
                 print('is_first_time: $_isFirstTime');
                 return _isFirstTime ? new OnBoarding() : new HomePage();
@@ -60,8 +60,8 @@ class BankDroidApp extends StatelessWidget {
                 child: new CircularProgressIndicator(),
               );
             }
-        ),
-      )
+        )
+      ),
     );
   }
 }

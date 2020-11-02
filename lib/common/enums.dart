@@ -46,6 +46,7 @@ enum TipoOperacion{
   TU_ENVIO,
   NAUTA,
   ONAT,
+  VIAJANDO,
   DEFAULT,
 }
 
@@ -70,6 +71,7 @@ IconData getIconData(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.TU_ENVIO ? Icons.shopping_cart
       : tipoOperacion == TipoOperacion.NAUTA ? Icons.router
       : tipoOperacion == TipoOperacion.ONAT ? Icons.account_balance
+      : tipoOperacion == TipoOperacion.VIAJANDO ? Icons.directions_transit
       : tipoOperacion == TipoOperacion.INTERES ? Icons.payment
       : tipoOperacion == TipoOperacion.TRANSFERENCIA ? Icons.compare_arrows
       : tipoOperacion == TipoOperacion.RECARGA_MOVIL ? Icons.phone_android
@@ -109,6 +111,7 @@ String getOperationTitle(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.TU_ENVIO ? 'Tu Envio'
       : tipoOperacion == TipoOperacion.NAUTA ? 'Nauta'
       : tipoOperacion == TipoOperacion.ONAT ? 'ONAT'
+      : tipoOperacion == TipoOperacion.VIAJANDO ? 'Viajando'
       : tipoOperacion == TipoOperacion.ENZONA ? "En Zona"
       : "Desconocido";
 }

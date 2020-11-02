@@ -687,13 +687,8 @@ class HomePage extends StatelessWidget {
       create: _createViewModel,
       child: Consumer<HomeViewModel>(
         builder: (context, viewModel, child) {
-          var localization = Localization.of(context);
-
-          if(viewModel.normal) {
+          if(viewModel.normal || viewModel.loading) {
             _scheduleLoadService(context, viewModel);
-            return Center(child: CircularProgressIndicator());
-          }
-          if(viewModel.loading) {
             return Center(child: CircularProgressIndicator());
           }
           return new Scaffold(
@@ -704,23 +699,11 @@ class HomePage extends StatelessWidget {
                 EasyDynamicThemeBtn(),
               ],
             ),
-//            body: _buildTabPage(context),
             body: _buildTabPage(context, viewModel),
             bottomNavigationBar: _buildBottomNavBar(context, viewModel),
           );
         },
       ),
-//      child: new Scaffold(
-//        key: _homeScaffoldKey,
-//        appBar: AppBar(
-//          title: new Text('${localization.appTitleText}'),
-//          actions: [
-//            EasyDynamicThemeBtn(),
-//          ],
-//        ),
-//        body: _buildTabPage(context),
-//        bottomNavigationBar: _buildBottomNavBar(context),
-//      ),
     );
   }
 }

@@ -86,37 +86,17 @@ class _OnBoardingState extends State<OnBoarding> {
   Widget build(BuildContext context) {
     List pages = fillPages();
 
-    return new Builder(
-      builder: (context) => IntroViewsFlutter(
-        pages,
-        onTapDoneButton: () {
-
-          MaterialPageRoute route = MaterialPageRoute(builder: (context) => HomePage(),);
-          if(_isFirstTime){
-            route = MaterialPageRoute(builder: (context) =>
-                ConfigData(isFromOnBoarding: true),
-            );
-          }
-          if(widget.userId != null){
-            route = MaterialPageRoute(builder: (context) =>
-                HomePage(),
-            );
-          }
-
-          Navigator.pushReplacement(
-            context,
-            route, //MaterialPageRoute
+    return IntroViewsFlutter(
+      pages,
+      onTapDoneButton: () {
+        MaterialPageRoute route = MaterialPageRoute(builder: (context) => HomePage());
+        if(_isFirstTime) {
+          route = MaterialPageRoute(builder: (context) =>
+              ConfigData(isFromOnBoarding: true),
           );
-        },
-        showSkipButton: true, //Whether you want to show the skip button or not.
-        skipText: new Text('Omitir'),
-//        doneText: new Text(show_conexion_data ? spanish ? 'Configuración':'Configuration' : spanish ? 'Comenzar':'Start'),
-        doneText: new Text(_isFirstTime ? 'Configuración' : 'Continuar'),
-        pageButtonTextStyles: TextStyle(
-          color: Colors.white,
-          fontSize: 18.0,
-        ),
-      ), //IntroViewsFlutter
+        }
+        Navigator.of(context).pushReplacement(route);
+      }
     );
   }
 }

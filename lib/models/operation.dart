@@ -96,6 +96,8 @@ class Operation {
         tipoServicio = TipoOperacion.TU_ENVIO;
       else if (idOperacion == "ONAT" && idTransaccion == "YY")
         tipoServicio = TipoOperacion.ONAT;
+      else if (idOperacion == "VIAJ" && idTransaccion == "MM")
+        tipoServicio = TipoOperacion.VIAJANDO;
       else if (idOperacion == "ENZONA" ||idOperacion == "ZZ" || idTransaccion == "ZZ")
         tipoServicio = TipoOperacion.ENZONA;
     }
