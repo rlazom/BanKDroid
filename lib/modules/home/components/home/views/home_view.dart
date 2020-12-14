@@ -1,52 +1,29 @@
+import 'package:bankdroid/common/enums.dart';
 import 'package:bankdroid/common/l10n/applocalizations.dart';
-import 'package:bankdroid/common/notifiers/operation_list.dart';
-import 'package:bankdroid/module/home/components/home/view_model/home_view_model.dart';
-import 'package:bankdroid/module/home/components/resume_tab/views/resume_tab.dart';
-import 'package:bankdroid/views/operation_list.dart';
+import 'package:bankdroid/modules/home/components/home/view_model/home_view_model.dart';
+import 'package:bankdroid/modules/home/components/home/views/operation_list_wdt.dart';
+import 'package:bankdroid/modules/home/components/resume_tab/views/resume_tab.dart';
 import 'package:easy_dynamic_theme/easy_dynamic_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 
 
-//class HomePage extends StatelessWidget {
-//  @override
-//  Widget build(BuildContext context) {
-//    return Container();
-//  }
-//}
-
-//class HomePage extends StatefulWidget {
-//  HomePage({Key key, this.title}) : super(key: key);
-//  final String title;
-//
-//  @override
-//  _HomePageState createState() => new _HomePageState();
-//}
-//
-//class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
 class HomePage extends StatelessWidget {
+  static const String route = '/home';
   final GlobalKey<ScaffoldState> _homeScaffoldKey = new GlobalKey<ScaffoldState>();
 
   Widget _buildTabPage(BuildContext context, HomeViewModel viewModel) {
-    var operationListProvider = Provider.of<OperationList>(context, listen: false);
+//    var operationListProvider = Provider.of<OperationList>(context, listen: false);
 
     List pages = [
-//      Center(child: Icon(Icons.contacts),),
       ResumeTab(),
-//      Center(child: Icon(Icons.format_list_numbered),),
-      OperationListWdt(operations: operationListProvider.listCup,),
-      OperationListWdt(operations: operationListProvider.listCuc,),
-      Center(child: Icon(Icons.format_list_bulleted),),
+//      OperationListWdt(operations: operationListProvider.listCup,),
+//      OperationListWdt(operations: operationListProvider.listCuc,),
+      OperationListWdt(currency: MONEDA.CUP,),
+      OperationListWdt(currency: MONEDA.CUC,),
     ];
-//    return pages.elementAt(viewModel(context).currentIndex);
     return pages.elementAt(viewModel.currentIndex);
-//    return ValueListenableBuilder<int>(
-//      valueListenable: viewModel.currentIndex,
-//      builder: (context, currentIndex, child) {
-//        return pages.elementAt(currentIndex);
-//      },
-//    );
   }
 
   List<BottomNavigationBarItem> _buildBottomNavBarItems() {
@@ -63,16 +40,6 @@ class HomePage extends StatelessWidget {
       items: _buildBottomNavBarItems(),
       onTap: (int newIndex) => viewModel.updateIndex(newIndex: newIndex),
     );
-//    return ValueListenableBuilder<int>(
-//      valueListenable: viewModel.currentIndex,
-//      builder: (context, currentIndex, child) {
-//        return BottomNavigationBar(
-//          currentIndex: currentIndex,
-//          items: _buildBottomNavBarItems(),
-//          onTap: (int newIndex) => viewModel.loading ? null : (){viewModel.updateIndex(newIndex: newIndex);},
-//        );
-//      },
-//    );
   }
 
 //  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKeyCup = new GlobalKey<RefreshIndicatorState>();
@@ -674,7 +641,6 @@ class HomePage extends StatelessWidget {
 
   void _scheduleLoadService(BuildContext context, HomeViewModel viewModel) {
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) async {
-//      await viewModel(context).loadData(context);
       await viewModel.loadData(context);
     });
   }
