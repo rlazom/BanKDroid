@@ -1,11 +1,13 @@
-import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bankdroid/common/enums.dart';
+import 'package:bankdroid/common/notifiers/device_contact_list.dart';
+import 'package:bankdroid/models/device_contact.dart';
 import 'package:bankdroid/models/operation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class OperationModalItem extends StatelessWidget {
   final Operation operation;
@@ -20,7 +22,7 @@ class OperationModalItem extends StatelessWidget {
           children: <Widget>[
             new Icon(
               getIconData(operation.tipoOperacion),
-              color: getIconColor(operation.naturaleza),
+              color: operation.getIconColor(),
               size: 40.0,
             ),
             new Text(getOperationTitle(operation.tipoOperacion)),
@@ -75,7 +77,7 @@ class OperationModalItem extends StatelessWidget {
     ));
 
     // Adding a blank row
-    listModalContentElements.add(new Text(''));
+    listModalContentElements.add(new SizedBox(height: 16,));
 
     // Adding Amount and Balance
     listModalContentElements.add(new Row(
@@ -92,7 +94,7 @@ class OperationModalItem extends StatelessWidget {
         new Text(
           operation.saldo.toStringAsFixed(2) +
               " " +
-              getMonedaStr(operation.moneda),
+              operation.getMonedaStr(),
           style: TextStyle(
             color: operation.isSaldoReal 
               ? Theme.of(context).textTheme.bodyText2.color
@@ -105,13 +107,12 @@ class OperationModalItem extends StatelessWidget {
     // Adding Observations (if needed)
     if (operation.observaciones.length > 0) {
       // Adding a blank row
-      listModalContentElements.add(new Text(''));
+      listModalContentElements.add(new SizedBox(height: 16,));
 
       // Adding Transfer/Service Payment associated data
       var obsArr = operation.observaciones.split(" ");
       String obsTitle = obsArr[0];
       String obsContent = obsArr[1];
-      bool esCUC = (obsContent.substring(0, 4) == '9202' || obsContent.substring(0, 4) == '9200');
 
       String chipText = obsContent;
       String chipCurrencyText = '';
@@ -120,6 +121,18 @@ class OperationModalItem extends StatelessWidget {
       Uint8List thumbnail = null;
 
       // Adding Chip Row:: Loading Contacts Data
+      DeviceContactList deviceContactList = Provider.of<DeviceContactList>(context, listen: false);
+      DeviceContact contact = deviceContactList.getDeviceContactWithPhoneNumber(phoneNumber: obsContent);
+
+      if(contact != null) {
+        chipText = contact.displayName ?? obsContent;
+        label = contact.getPhoneLabel(obsContent);
+//        thumbnail = contact.avatar;
+
+//        if(thumbnail == null) {
+//          thumbnail = await contact.getAvatar();
+//        }
+      }
 //    var readContactsPermissionStatus = await getPermission(Permission.ReadContacts);
 //      var readContactsPermissionStatus = await getPermission(Permission.contacts);
 
@@ -135,7 +148,7 @@ class OperationModalItem extends StatelessWidget {
 
       if (operation.tipoSms == TipoSms.TRANSFERENCIA_RX_SALDO ||
           operation.tipoSms == TipoSms.TRANSFERENCIA_TX_SALDO) {
-        chipCurrencyText = esCUC ? getMonedaStr(MONEDA.CUC) : getMonedaStr(MONEDA.CUP);
+        chipCurrencyText = operation.getMonedaStr();
         esTransf = true;
       }
       if (operation.tipoSms == TipoSms.RECARGA_MOVIL) {
@@ -188,7 +201,7 @@ class OperationModalItem extends StatelessWidget {
             padding: const EdgeInsets.only(top: 5.0, bottom: 5.0, right: 5.0),
             child: new GestureDetector(
 //              onTap: (){ chipText != obsContent ? null : _createOrEditContact(obsContent, chipCurrencyText, readContactsPermissionStatus);},
-              onTap: (){},
+              onTap: (){deviceContactList.openContactForm();},
               child: new CircleAvatar(
                 maxRadius: 15.0,
                 backgroundColor: Colors.grey.shade800,
@@ -206,12 +219,12 @@ class OperationModalItem extends StatelessWidget {
             child: new InkWell(
                 onTap: (){
                   Clipboard.setData(new ClipboardData(text: obsContent));
-                  Scaffold.of(context).showSnackBar(new SnackBar(
-                    content: new Text("Copiado al portapapeles $obsContent"),
-                  ));
-                  new Timer(const Duration(seconds: 3), () {
-                    Scaffold.of(context).hideCurrentSnackBar();
-                  });
+//                  Scaffold.of(context).showSnackBar(new SnackBar(
+//                    content: new Text("Copiado al portapapeles $obsContent"),
+//                  ));
+//                  new Timer(const Duration(seconds: 3), () {
+//                    Scaffold.of(context).hideCurrentSnackBar();
+//                  });
                 },
                 child: new Text(
                   chipText,

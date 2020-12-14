@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/operation.dart';
-import '../common/theme/colors.dart';
-import '../common/enums.dart';
+import '../../../../../models/operation.dart';
+import '../../../../../common/theme/colors.dart';
+import '../../../../../common/enums.dart';
 
 void showOperationsTypeModal(BuildContext context, List<Operation> operations){
   List<Widget> listModalContentElements = getModalContentList(context, operations);
@@ -18,11 +18,11 @@ void showOperationsTypeModal(BuildContext context, List<Operation> operations){
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   new Icon(
-                    getIconData(operations.first.tipoOperacion),
+                    operations.first.getIconData(),
                     color: kDefaultIconColor,
                     size: 40.0,
                   ),
-                  new Text(getOperationTitle(operations.first.tipoOperacion)),
+                  new Text(operations.first.getOperationTitle()),
                 ],
               ),
               new Divider(
@@ -71,8 +71,8 @@ List<Widget> getModalContentList(BuildContext context, List<Operation> operation
         new Text((operation.naturaleza == NaturalezaOperacion.DEBITO
             ? '-'
             : '+') +
-            operation.importe.toStringAsFixed(2) + " " + getMonedaStr(operation.moneda),
-          style: TextStyle(color: getIconColor(operation.naturaleza)),),
+            operation.importe.toStringAsFixed(2) + " " + operation.getMonedaStr(),
+          style: TextStyle(color: operation.getIconColor()),),
       ],
     ));
   });

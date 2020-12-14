@@ -1,40 +1,22 @@
 import 'package:bankdroid/common/enums.dart';
 import 'package:bankdroid/common/general_functions.dart';
 import 'package:bankdroid/common/l10n/applocalizations.dart';
-import 'package:bankdroid/common/notifiers/operation_list.dart';
 import 'package:bankdroid/common/notifiers/view_model_consumer.dart';
 import 'package:bankdroid/common/theme/colors.dart';
 import 'package:bankdroid/common/widgets/operation_modal_item.dart';
 import 'package:bankdroid/models/operation.dart';
 import 'package:bankdroid/models/resumen.dart';
-import 'package:bankdroid/module/home/components/resume_tab/view_model/resume_tab_view_model.dart';
-import 'package:bankdroid/views/operation_list_item_modal.dart';
-import 'package:bankdroid/views/operation_list_type_modal.dart';
+import 'package:bankdroid/modules/home/components/resume_tab/view_model/resume_tab_view_model.dart';
+import 'package:bankdroid/modules/home/components/resume_tab/views/operation_list_type_modal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-//import '../../../../views/operation_list_item_modal.dart';
-//import '../../../../views/operation_list_type_modal.dart';
-//import '../../../../models/resumen.dart';
-//import '../../../../models/operation.dart';
-//import '../../../../utils/ussd_methods.dart';
-//import '../../../../common/theme/colors.dart';
-//import '../../../../common/enums.dart';
 
 class ResumeTab extends StatelessWidget with ViewModelConsumer<ResumeTabViewModel> {
   final GlobalKey<ScaffoldState> _resumeTabScaffoldKey = new GlobalKey<ScaffoldState>();
-//  final bool conected;
-//  final double saldoCUP;
-//  final double saldoCUC;
-//  final Operation lastOperationCUP;
-//  final Operation lastOperationCUC;
-//  final List<ResumeMonth> resumeOperationsCUP;
-//  final List<ResumeMonth> resumeOperationsCUC;
-
-//  ResumeTab({Key key, this.conected, this.saldoCUP, this.saldoCUC, this.lastOperationCUP, this.lastOperationCUC, this.resumeOperationsCUP, this.resumeOperationsCUC}) : super(key: key);
   ResumeTab({Key key}) : super(key: key);
 
   ResumeTabViewModel _createViewModel(BuildContext context) {
@@ -224,7 +206,7 @@ class SaldoActual extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     new Text(
-                      getMonedaStr(moneda),
+                      lastOp.getMonedaStr(),
                       style: TextStyle(
                         fontSize: 15.0,
 //                        color: Colors.black54,
@@ -239,7 +221,7 @@ class SaldoActual extends StatelessWidget {
                               ? Icons.arrow_drop_down
                               : Icons.arrow_drop_up,
                           size: 12.0,
-                          color: lastOp == null ? null : getIconColor(lastOp.naturaleza),
+                          color: lastOp == null ? null : lastOp.getIconColor(),
                         ),
                         new Text(
                           lastOp == null ? '' : lastOp.importe.toStringAsFixed(2),
@@ -419,7 +401,7 @@ class ResumenMensual extends StatelessWidget {
   List<Widget> generateResumeListTiposOperations() {
     List<Widget> list = new List<Widget>();
 
-    tiposOperaciones.forEach((operationType) {
+    tiposOperaciones.forEach((ResumeTypeOperation operationType) {
       list.add(OperacionGastoIngresoListItem(
         tipoOperacion: operationType.tipoOperacion,
         impCre: operationType.impCre,

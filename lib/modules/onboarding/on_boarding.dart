@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:bankdroid/common/theme/colors.dart';
-import 'package:bankdroid/module/home/components/home/views/home_view.dart';
-import 'package:bankdroid/views/config.dart';
+import 'package:bankdroid/modules/config/components/config/views/config_data.dart';
+import 'package:bankdroid/modules/home/components/home/views/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:intro_views_flutter/Models/page_view_model.dart';
 import 'package:intro_views_flutter/intro_views_flutter.dart';
@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 
 class OnBoarding extends StatefulWidget {
+  static const String route = '/on-boarding';
   final String title;
   final String userId;
 

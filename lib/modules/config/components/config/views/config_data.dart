@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 import 'package:bankdroid/common/theme/colors.dart';
-import 'package:bankdroid/module/home/components/home/views/home_view.dart';
+import 'package:bankdroid/modules/home/components/home/views/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
