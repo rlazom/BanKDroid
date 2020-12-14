@@ -93,6 +93,7 @@ class OperationItemChip extends StatelessWidget {
     Uint8List thumbnail;
 
 
+    // TODO: CHECK PERMISSIONS
     if(operation.contact != null) {
       chipText = operation.contact.displayName ?? obsContent;
       label = operation.contact.getPhoneLabel(obsContent);

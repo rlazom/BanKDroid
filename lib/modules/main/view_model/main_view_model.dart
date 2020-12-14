@@ -29,9 +29,12 @@ class MainViewModel extends LoaderViewModel {
     print('MainViewModel - loadData() - BEGIN');
     await sharedPreferencesService.loadInstance();
 
-    await _requestPermissions();
-    await _loadContacts(context);
-    await _loadOperations(context);
+
+    await Future.wait([
+      _requestPermissions(),
+      _loadContacts(context),
+      _loadOperations(context),
+    ]);
 
     _isFirstTime = sharedPreferencesService.isFirstTime();
     print('MainViewModel - loadData() - isFirstTime: $_isFirstTime');
@@ -45,24 +48,24 @@ class MainViewModel extends LoaderViewModel {
     print('MainViewModel - loadData() - END');
   }
 
-  _requestPermissions() async {
+  Future _requestPermissions() async {
     List permissions = [Permission.phone, Permission.sms, Permission.contacts,];
     for(Permission permission in permissions) {
       await permission.request();
     }
   }
 
-  _loadContacts(BuildContext context) async {
+  Future _loadContacts(BuildContext context) async {
     DeviceContactList deviceContactList = Provider.of<DeviceContactList>(context, listen: false);
-    await deviceContactList.loadDeviceContactList();
+    if(await Permission.contacts.request().isGranted) {
+      await deviceContactList.loadDeviceContactList();
+    }
   }
 
-  _loadOperations(BuildContext context) async {
+  Future _loadOperations(BuildContext context) async {
     print('HomeViewModel _reloadSMSOperations()');
-//    BuildContext context = homeScaffoldKey.currentContext;
 
     if(await Permission.sms.request().isGranted && context != null) {
-//      updateLoading();
       List<SmsMessage> messages = await smsService.readSms();
 
       OperationList operationListProvider = Provider.of<OperationList>(context, listen: false);

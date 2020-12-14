@@ -12,8 +12,8 @@ class MainView extends StatelessWidget {
   }
 
   void _scheduleLoadService(BuildContext context, MainViewModel viewModel) {
-    SchedulerBinding.instance.addPostFrameCallback((timeStamp) async {
-      await viewModel.loadData(context);
+    SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+      viewModel.loadData(context);
     });
   }
 
