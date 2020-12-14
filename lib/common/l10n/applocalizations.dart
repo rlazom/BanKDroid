@@ -36,6 +36,8 @@ class Localization {
 
   String get phoneNumberHint => _getValue(PhoneNumberHint);
   String get passwordHint => _getValue(PasswordHint);
+  String get firstNameHint => _getValue(FirstNameHint);
+  String get lastNameHint => _getValue(LastNameHint);
 
   String get patternFieldErrorMessage => _getValue(PatternFieldErrorMessage);
   String get requiredFieldErrorMessage => _getValue(RequiredFieldErrorMessage);

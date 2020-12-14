@@ -12,6 +12,8 @@ const String AppTitleText = 'app_title_text',
 
     PhoneNumberHint = 'phone_number_hint',
     PasswordHint = 'password_hint',
+    FirstNameHint = 'first_name_hint',
+    LastNameHint = 'last_name_hint',
 
     PatternFieldErrorMessage = 'pattern_field_error_message',
     RequiredFieldErrorMessage = 'required_field_error_message',
@@ -35,6 +37,8 @@ final es = {
 
   PhoneNumberHint: 'Número de teléfono',
   PasswordHint: 'Contraseña de Mi Cubacel',
+  FirstNameHint: 'Nombre',
+  LastNameHint: 'Apellidos',
 
   PatternFieldErrorMessage: 'Introduzca un número de teléfono correcto',
   RequiredFieldErrorMessage: 'Campo requerido',
@@ -58,7 +62,9 @@ final en = {
   CollectionDataText: 'I agree that my data is going to be collected by https://cuban.engineer',
 
   PhoneNumberHint: 'Phone number',
-  PasswordHint: "Mi Cubacel's password" ,
+  PasswordHint: "Mi Cubacel's password",
+  FirstNameHint: 'First Name',
+  LastNameHint: 'Last Name',
 
   PatternFieldErrorMessage: 'Please insert a correct phone number',
   RequiredFieldErrorMessage: 'Required field',
