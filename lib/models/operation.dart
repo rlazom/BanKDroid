@@ -1,6 +1,10 @@
+import 'package:bankdroid/common/theme/colors.dart';
+import 'package:bankdroid/models/device_contact.dart';
+import 'package:flutter/material.dart';
+
 import '../common/enums.dart';
 
-class Operation {
+class Operation extends ChangeNotifier {
   String idOperacion;
   DateTime fecha;
   TipoOperacion tipoOperacion;
@@ -12,6 +16,7 @@ class Operation {
   bool isSaldoReal;
   String observaciones;
   String fullText;
+  DeviceContact contact;
 
   Operation() {
     this.idOperacion = '';
@@ -40,7 +45,7 @@ class Operation {
     return idOperacion.hashCode;
   }
 
-  NaturalezaOperacion getNaturalezaOperacion(String cadena) {
+  static NaturalezaOperacion getNaturalezaOperacion(String cadena) {
     NaturalezaOperacion naturalezaOperacion = NaturalezaOperacion.DEBITO;
     if (cadena != null) {
       if (cadena.contains("CR"))
@@ -49,7 +54,7 @@ class Operation {
     return naturalezaOperacion;
   }
 
-  TipoOperacion getTipoOperacion(String cadena, NaturalezaOperacion naturaleza) {
+  static TipoOperacion getTipoOperacion(String cadena, NaturalezaOperacion naturaleza) {
     var cadenaArr = cadena.split(" ");
     String idOperacion = cadenaArr.first;
     String idTransaccion = cadenaArr[1].substring(0,2);
@@ -107,7 +112,7 @@ class Operation {
     return tipoServicio;
   }
 
-  MONEDA getMoneda(String cadena) {
+  static MONEDA getMoneda(String cadena) {
     MONEDA moneda = MONEDA.CUP;
     if (cadena != null) {
       if (cadena.contains("CUC"))
@@ -116,7 +121,15 @@ class Operation {
     return moneda;
   }
 
-  Operation OperationFromSms(int idOperationSaldo, TipoSms tipoSms, DateTime smsDate, messageBody) {
+  getCardType(String cardNumber) {
+    MONEDA cardType = MONEDA.CUP;
+    if (cardNumber.substring(0, 4) == '9202' || cardNumber.substring(0, 4) == '9200') {
+      cardType = MONEDA.CUC;
+    }
+    return cardType;
+  }
+
+  static Operation OperationFromSms(int idOperationSaldo, TipoSms tipoSms, DateTime smsDate, messageBody) {
     Operation operation = new Operation();
     var lines;
 
@@ -248,5 +261,69 @@ class Operation {
       }
     }
     return operation;
+  }
+
+  IconData getIconData() {
+    return tipoOperacion == TipoOperacion.ATM ? Icons.local_atm
+        : tipoOperacion == TipoOperacion.SALDO ? Icons.attach_money
+        : tipoOperacion == TipoOperacion.TELEFONO ? Icons.phone
+        : tipoOperacion == TipoOperacion.ELECTRICIDAD ? Icons.power
+        : tipoOperacion == TipoOperacion.AGUA ? Icons.opacity
+        : tipoOperacion == TipoOperacion.GAS ? Icons.whatshot
+        : tipoOperacion == TipoOperacion.TU_ENVIO ? Icons.shopping_cart
+        : tipoOperacion == TipoOperacion.NAUTA ? Icons.router
+        : tipoOperacion == TipoOperacion.ONAT ? Icons.account_balance
+        : tipoOperacion == TipoOperacion.VIAJANDO ? Icons.directions_transit
+        : tipoOperacion == TipoOperacion.INTERES ? Icons.payment
+        : tipoOperacion == TipoOperacion.TRANSFERENCIA ? Icons.compare_arrows
+        : tipoOperacion == TipoOperacion.RECARGA_MOVIL ? Icons.phone_android
+        : tipoOperacion == TipoOperacion.OP_VENTANILLA ? Icons.account_balance
+        : tipoOperacion == TipoOperacion.POS ? Icons.shopping_basket
+        : tipoOperacion == TipoOperacion.SALARIO ? Icons.work
+        : tipoOperacion == TipoOperacion.JUBILACION ? Icons.work
+        : tipoOperacion == TipoOperacion.DESCUENTO_NOMINA ? Icons.work
+        : tipoOperacion == TipoOperacion.MULTA ? Icons.assignment
+        : tipoOperacion == TipoOperacion.AJUSTE ? Icons.exposure
+        : tipoOperacion == TipoOperacion.MISSING ? Icons.broken_image
+        : tipoOperacion == TipoOperacion.ENZONA ? Icons.data_usage
+        : Icons.help_outline;
+  }
+
+  Color getIconColor() {
+    return naturaleza == NaturalezaOperacion.DEBITO ? kColorDebito : kColorCredito;
+  }
+
+  String getOperationTitle() {
+    return tipoOperacion == TipoOperacion.ATM ? "Cajero Automatico"
+        : tipoOperacion == TipoOperacion.SALDO ? "Consulta Saldo"
+        : tipoOperacion == TipoOperacion.TELEFONO ? "Factura Telefonica"
+        : tipoOperacion == TipoOperacion.ELECTRICIDAD ? "Factura Electrica"
+        : tipoOperacion == TipoOperacion.INTERES ? "Intereses"
+        : tipoOperacion == TipoOperacion.TRANSFERENCIA ? "Transferencia"
+        : tipoOperacion == TipoOperacion.RECARGA_MOVIL ? "Recarga Movil"
+        : tipoOperacion == TipoOperacion.OP_VENTANILLA ? "Op. Ventanilla"
+        : tipoOperacion == TipoOperacion.POS ? "POS"
+        : tipoOperacion == TipoOperacion.SALARIO ? "Salario"
+        : tipoOperacion == TipoOperacion.JUBILACION ? "Jubilacion"
+        : tipoOperacion == TipoOperacion.DESCUENTO_NOMINA ? "Descuento Nómina"
+        : tipoOperacion == TipoOperacion.MULTA ? "Multa"
+        : tipoOperacion == TipoOperacion.AJUSTE ? "Ajuste"
+        : tipoOperacion == TipoOperacion.AGUA ? "Factura Agua"
+        : tipoOperacion == TipoOperacion.GAS ? 'Factura Gas'
+        : tipoOperacion == TipoOperacion.TU_ENVIO ? 'Tu Envio'
+        : tipoOperacion == TipoOperacion.NAUTA ? 'Nauta'
+        : tipoOperacion == TipoOperacion.ONAT ? 'ONAT'
+        : tipoOperacion == TipoOperacion.VIAJANDO ? 'Viajando'
+        : tipoOperacion == TipoOperacion.ENZONA ? "En Zona"
+        : "Desconocido";
+  }
+
+  String getMonedaStr() {
+    return moneda == MONEDA.CUP ? "CUP" : "CUC";
+  }
+
+  updateContact(DeviceContact newDeviceContact) {
+    this.contact = newDeviceContact;
+    notifyListeners();
   }
 }
