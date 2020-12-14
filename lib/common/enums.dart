@@ -1,4 +1,3 @@
-import 'package:bankdroid/common/theme/colors.dart';
 import 'package:flutter/material.dart';
 
 enum TipoSms{
@@ -85,10 +84,6 @@ IconData getIconData(TipoOperacion tipoOperacion) {
       : tipoOperacion == TipoOperacion.MISSING ? Icons.broken_image
       : tipoOperacion == TipoOperacion.ENZONA ? Icons.data_usage
       : Icons.help_outline;
-}
-
-Color getIconColor(NaturalezaOperacion naturaleza) {
-  return naturaleza == NaturalezaOperacion.DEBITO ? kColorDebito : kColorCredito;
 }
 
 String getOperationTitle(TipoOperacion tipoOperacion) {
